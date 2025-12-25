@@ -99,17 +99,34 @@ export default function MitraDashboard() {
           // Calculate analytics from profile data
           const completion = calculateCompletion(profileData)
 
-          // Mock analytics for now (will be replaced with real API)
-          setAnalytics({
-            profileViews: Math.floor(Math.random() * 500) + 100,
-            totalReviews: profileData.totalReview || 0,
-            averageRating: profileData.rating || 0,
-            inquiries: Math.floor(Math.random() * 50) + 10,
-            servicesCount: profileData.services?.length || 0,
-            imagesCount: profileData.images?.length || 0,
-            profileCompletion: completion,
-            recentReviews: profileData.reviews?.slice(0, 5) || [],
-          })
+          // Fetch real analytics
+          const analyticsResponse = await fetch('/api/mitra/analytics')
+          if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json()
+
+            setAnalytics({
+              profileViews: analyticsData.totalViews || 0,
+              totalReviews: analyticsData.totalReviews || 0,
+              averageRating: analyticsData.averageRating || 0,
+              inquiries: analyticsData.totalInquiries || 0,
+              servicesCount: profileData.services?.length || 0,
+              imagesCount: profileData.images?.length || 0,
+              profileCompletion: completion,
+              recentReviews: analyticsData.recentReviews || [],
+            })
+          } else {
+            // Fallback to profile data if analytics API fails
+            setAnalytics({
+              profileViews: 0,
+              totalReviews: profileData.totalReview || 0,
+              averageRating: profileData.rating || 0,
+              inquiries: 0,
+              servicesCount: profileData.services?.length || 0,
+              imagesCount: profileData.images?.length || 0,
+              profileCompletion: completion,
+              recentReviews: [],
+            })
+          }
         }
       } catch (error) {
         console.error('Error fetching analytics:', error)

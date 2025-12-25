@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   Store,
   Camera,
@@ -23,6 +24,9 @@ import {
   Eye,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import ImageUpload from '@/components/upload/image-upload'
+import MultiImageUpload from '@/components/upload/multi-image-upload'
+import GoogleMapsAutocomplete from '@/components/maps/google-maps-autocomplete'
 
 interface Service {
   name: string
@@ -43,6 +47,8 @@ interface MitraProfile {
   gallery: string[]
   services: Service[]
   features: string[]
+  latitude?: number
+  longitude?: number
   hours: {
     weekday: string
     weekend: string
@@ -122,7 +128,9 @@ export default function MitraDashboard() {
     price: '',
     icon: '💻',
   })
-  const [newGalleryUrl, setNewGalleryUrl] = useState('')
+  const [newFeature, setNewFeature] = useState('')
+  const MAX_FEATURE_LENGTH = 30 // Character limit for custom features
+  const [mitraId, setMitraId] = useState<string | null>(null)
 
   // Fetch existing profile
   useEffect(() => {
@@ -131,6 +139,13 @@ export default function MitraDashboard() {
         const response = await fetch('/api/mitra/profile')
         if (response.ok) {
           const data = await response.json()
+          console.log('Fetched profile data:', data)
+
+          // Store mitra ID for preview
+          if (data.id) {
+            setMitraId(data.id)
+          }
+
           // Transform API data to match frontend state
           setProfile({
             name: data.businessName || '',
@@ -155,6 +170,12 @@ export default function MitraDashboard() {
               weekend: data.weekendHours || 'Minggu: Tutup',
             },
           })
+        } else if (response.status === 404) {
+          // Profile doesn't exist yet - this is OK for new mitra
+          // Keep default profile state, don't reset
+          console.log('No existing profile found - using defaults')
+        } else {
+          console.error('Error fetching profile:', response.status)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -222,6 +243,8 @@ export default function MitraDashboard() {
         features: profile.features,
         weekdayHours: profile.hours.weekday,
         weekendHours: profile.hours.weekend,
+        latitude: profile.latitude,
+        longitude: profile.longitude,
         services: profile.services.map((svc) => ({
           name: svc.name,
           price: svc.price,
@@ -244,7 +267,17 @@ export default function MitraDashboard() {
         throw new Error(error.error || 'Gagal menyimpan profil')
       }
 
-      toast.success('Profil berhasil disimpan!')
+      const data = await response.json()
+      console.log('Save response:', data)
+
+      // Store mitra ID for preview
+      if (data.id) {
+        setMitraId(data.id)
+      }
+
+      toast.success(
+        'Profil berhasil disimpan! Klik "Lihat Preview" untuk melihat hasilnya.'
+      )
     } catch (error: any) {
       console.error('Error saving profile:', error)
       toast.error(error.message || 'Gagal menyimpan profil')
@@ -271,24 +304,6 @@ export default function MitraDashboard() {
     })
   }
 
-  const addGalleryImage = () => {
-    if (newGalleryUrl && profile.gallery.length < 8) {
-      setProfile({
-        ...profile,
-        gallery: [...profile.gallery, newGalleryUrl],
-      })
-      setNewGalleryUrl('')
-      toast.success('Foto ditambahkan!')
-    }
-  }
-
-  const removeGalleryImage = (index: number) => {
-    setProfile({
-      ...profile,
-      gallery: profile.gallery.filter((_, i) => i !== index),
-    })
-  }
-
   const toggleFeature = (feature: string) => {
     if (profile.features.includes(feature)) {
       setProfile({
@@ -301,6 +316,33 @@ export default function MitraDashboard() {
         features: [...profile.features, feature],
       })
     }
+  }
+
+  const addCustomFeature = () => {
+    const trimmed = newFeature.trim()
+    if (
+      trimmed &&
+      trimmed.length <= MAX_FEATURE_LENGTH &&
+      !profile.features.includes(trimmed)
+    ) {
+      setProfile({
+        ...profile,
+        features: [...profile.features, trimmed],
+      })
+      setNewFeature('')
+      toast.success('Keunggulan ditambahkan!')
+    } else if (trimmed.length > MAX_FEATURE_LENGTH) {
+      toast.error(`Maksimal ${MAX_FEATURE_LENGTH} karakter`)
+    } else if (profile.features.includes(trimmed)) {
+      toast.error('Keunggulan sudah ada')
+    }
+  }
+
+  const removeFeature = (feature: string) => {
+    setProfile({
+      ...profile,
+      features: profile.features.filter((f) => f !== feature),
+    })
   }
 
   if (status === 'loading' || fetchingProfile) {
@@ -316,50 +358,73 @@ export default function MitraDashboard() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Kelola Profil Bisnis
-            </h1>
-            <p className="mt-1 text-gray-600">
-              Lengkapi profil untuk tampil di halaman rekomendasi
-            </p>
-          </div>
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            Kelola Profil Bisnis
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 sm:text-base">
+            Lengkapi profil untuk tampil di halaman rekomendasi
+          </p>
+        </div>
+        <div className="flex gap-2">
           <button
-            onClick={() => router.push('/rekomendasi/1')}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+            onClick={handleSave}
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2 font-medium text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl disabled:opacity-50 sm:flex-none"
           >
-            <Eye className="h-5 w-5" />
-            Lihat Preview
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="hidden sm:inline">Menyimpan...</span>
+                <span className="sm:hidden">Simpan...</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5" />
+                <span>Simpan</span>
+              </>
+            )}
           </button>
+          {mitraId && (
+            <Link
+              href={`/rekomendasi/${mitraId}`}
+              target="_blank"
+              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+            >
+              <Eye className="h-5 w-5" />
+              <span className="hidden sm:inline">Lihat Preview</span>
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Profile Completion Card */}
-      <div className="mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 p-6 shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white">Kelengkapan Profil</h2>
-            <p className="mt-1 text-blue-100">
-              Lengkapi semua informasi agar muncul di halaman rekomendasi
+      <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 p-4 shadow-xl sm:mb-8 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-white sm:text-xl">
+              Kelengkapan Profil
+            </h2>
+            <p className="mt-1 text-sm text-blue-100 sm:text-base">
+              Lengkapi informasi agar tampil di rekomendasi
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative h-20 w-20">
+          <div className="flex items-center justify-end">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
               <svg className="h-full w-full -rotate-90 transform">
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="35"
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
                   fill="none"
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth="8"
                 />
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="35"
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
                   fill="none"
                   stroke="white"
                   strokeWidth="8"
@@ -368,7 +433,7 @@ export default function MitraDashboard() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xl font-bold text-white">
+                <span className="text-lg font-bold text-white sm:text-xl">
                   {completion}%
                 </span>
               </div>
@@ -378,24 +443,40 @@ export default function MitraDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 overflow-x-auto">
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
         {[
-          { id: 'info', label: 'Informasi Dasar', icon: Store },
-          { id: 'services', label: 'Layanan', icon: Edit3 },
-          { id: 'gallery', label: 'Galeri', icon: ImageIcon },
-          { id: 'contact', label: 'Kontak', icon: Phone },
+          {
+            id: 'info',
+            label: 'Informasi Dasar',
+            shortLabel: 'Info',
+            icon: Store,
+          },
+          {
+            id: 'services',
+            label: 'Layanan',
+            shortLabel: 'Layanan',
+            icon: Edit3,
+          },
+          {
+            id: 'gallery',
+            label: 'Galeri',
+            shortLabel: 'Galeri',
+            icon: ImageIcon,
+          },
+          { id: 'contact', label: 'Kontak', shortLabel: 'Kontak', icon: Phone },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-5 py-3 font-medium transition-all ${
+            className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all sm:px-5 sm:py-3 sm:text-base ${
               activeTab === tab.id
                 ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
                 : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50'
             }`}
           >
-            <tab.icon className="h-5 w-5" />
-            {tab.label}
+            <tab.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
           </button>
         ))}
       </div>
@@ -408,48 +489,13 @@ export default function MitraDashboard() {
             <h3 className="text-xl font-bold text-gray-900">Informasi Dasar</h3>
 
             {/* Banner Upload */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Banner Toko
-              </label>
-              <div className="relative h-48 overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50">
-                {profile.banner ? (
-                  <>
-                    <img
-                      src={profile.banner}
-                      alt="Banner"
-                      className="h-full w-full object-cover"
-                    />
-                    <button
-                      onClick={() => setProfile({ ...profile, banner: '' })}
-                      className="absolute right-2 top-2 rounded-full bg-red-600 p-2 text-white hover:bg-red-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center">
-                    <Camera className="mb-2 h-12 w-12 text-gray-400" />
-                    <p className="text-gray-500">
-                      Upload banner toko (1920x600 recommended)
-                    </p>
-                    <input
-                      type="text"
-                      placeholder="Paste URL gambar..."
-                      className="mt-3 w-80 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setProfile({
-                            ...profile,
-                            banner: (e.target as HTMLInputElement).value,
-                          })
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+            <ImageUpload
+              label="Banner Toko"
+              value={profile.banner}
+              onChange={(url) => setProfile({ ...profile, banner: url })}
+              onRemove={() => setProfile({ ...profile, banner: '' })}
+              folder="halotekno/banners"
+            />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
@@ -498,41 +544,50 @@ export default function MitraDashboard() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Kota
-                </label>
-                <select
-                  value={profile.city}
-                  onChange={(e) =>
-                    setProfile({ ...profile, city: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Pilih Kota</option>
-                  {CITY_OPTIONS.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Alamat Lengkap <span className="text-red-500">*</span>
+              </label>
+              <p className="mb-2 text-xs text-gray-500">
+                Gunakan Google Maps untuk memilih lokasi yang akurat
+              </p>
+              <GoogleMapsAutocomplete
+                defaultValue={profile.address}
+                placeholder="Cari alamat menggunakan Google Maps..."
+                onPlaceSelected={(place) => {
+                  setProfile({
+                    ...profile,
+                    address: place.address,
+                    city: place.city,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                  })
+                  toast.success(`Lokasi dipilih: ${place.city}`, {
+                    description: place.address,
+                  })
+                }}
+              />
+              {profile.address && (
+                <p className="mt-2 text-xs text-gray-600">
+                  📍 {profile.address}
+                </p>
+              )}
+            </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Alamat Lengkap
-                </label>
-                <input
-                  type="text"
-                  value={profile.address}
-                  onChange={(e) =>
-                    setProfile({ ...profile, address: e.target.value })
-                  }
-                  placeholder="Jl. Contoh No. 123, Kelurahan, Kecamatan"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Kota <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={profile.city}
+                readOnly
+                placeholder="Akan terisi otomatis dari Google Maps"
+                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Kota akan terisi otomatis saat Anda memilih alamat
+              </p>
             </div>
 
             {/* Features */}
@@ -540,24 +595,84 @@ export default function MitraDashboard() {
               <label className="mb-3 block text-sm font-medium text-gray-700">
                 Keunggulan Toko
               </label>
-              <div className="flex flex-wrap gap-2">
-                {FEATURE_OPTIONS.map((feature) => (
-                  <button
-                    key={feature}
-                    onClick={() => toggleFeature(feature)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                      profile.features.includes(feature)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {profile.features.includes(feature) && (
-                      <CheckCircle className="mr-1 inline h-4 w-4" />
-                    )}
-                    {feature}
-                  </button>
-                ))}
+
+              {/* Suggested Features */}
+              <div className="mb-4">
+                <p className="mb-2 text-xs text-gray-500">Pilih dari saran:</p>
+                <div className="flex flex-wrap gap-2">
+                  {FEATURE_OPTIONS.map((feature) => (
+                    <button
+                      key={feature}
+                      type="button"
+                      onClick={() => toggleFeature(feature)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        profile.features.includes(feature)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {profile.features.includes(feature) && (
+                        <CheckCircle className="mr-1 inline h-4 w-4" />
+                      )}
+                      {feature}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Custom Feature Input */}
+              <div className="mb-4">
+                <p className="mb-2 text-xs text-gray-500">
+                  Atau tambahkan keunggulan custom:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addCustomFeature()}
+                    placeholder="Contoh: Buka 24 Jam"
+                    maxLength={MAX_FEATURE_LENGTH}
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomFeature}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700"
+                  >
+                    <Plus className="inline h-4 w-4" />
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-400">
+                  {newFeature.length}/{MAX_FEATURE_LENGTH} karakter
+                </p>
+              </div>
+
+              {/* Selected Features */}
+              {profile.features.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-gray-700">
+                    Keunggulan terpilih:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.features.map((feature, index) => (
+                      <div
+                        key={index}
+                        className="group relative rounded-full bg-blue-600 px-4 py-2 pr-8 text-sm font-medium text-white"
+                      >
+                        {feature}
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(feature)}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-1 opacity-0 transition-all hover:bg-white/30 group-hover:opacity-100"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -647,57 +762,27 @@ export default function MitraDashboard() {
           <div className="space-y-6">
             <h3 className="text-xl font-bold text-gray-900">Galeri Foto</h3>
 
-            {/* Add Image Form */}
-            <div className="flex gap-4">
-              <input
-                type="text"
-                value={newGalleryUrl}
-                onChange={(e) => setNewGalleryUrl(e.target.value)}
-                placeholder="Paste URL gambar..."
-                className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={addGalleryImage}
-                disabled={profile.gallery.length >= 8}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Plus className="h-5 w-5" />
-                Tambah Foto
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              Maksimal 8 foto. Gunakan foto berkualitas tinggi untuk hasil
-              terbaik.
-            </p>
-
-            {/* Gallery Grid */}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {profile.gallery.map((image, index) => (
-                <div
-                  key={index}
-                  className="group relative overflow-hidden rounded-xl border border-gray-200"
-                >
-                  <img
-                    src={image}
-                    alt={`Gallery ${index + 1}`}
-                    className="h-40 w-full object-cover"
-                  />
-                  <button
-                    onClick={() => removeGalleryImage(index)}
-                    className="absolute right-2 top-2 rounded-full bg-red-600 p-2 text-white opacity-0 transition-all hover:bg-red-700 group-hover:opacity-100"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-              {profile.gallery.length === 0 && (
-                <div className="col-span-full py-12 text-center text-gray-400">
-                  <ImageIcon className="mx-auto mb-3 h-12 w-12 opacity-50" />
-                  Belum ada foto. Tambahkan foto untuk menarik pelanggan!
-                </div>
-              )}
-            </div>
+            <MultiImageUpload
+              key="mitra-gallery" // Prevent remount
+              label="Galeri Foto Toko"
+              value={profile.gallery}
+              onChange={(urls) => {
+                console.log('=== Gallery onChange START ===')
+                console.log('Received URLs:', urls)
+                console.log('URLs length:', urls.length)
+                setProfile((prev) => {
+                  console.log('Previous profile.gallery:', prev.gallery)
+                  console.log('Previous gallery length:', prev.gallery.length)
+                  const updated = { ...prev, gallery: urls }
+                  console.log('Updated profile.gallery:', updated.gallery)
+                  console.log('Updated gallery length:', updated.gallery.length)
+                  console.log('=== Gallery onChange END ===')
+                  return updated
+                })
+              }}
+              maxImages={8}
+              folder="halotekno/gallery"
+            />
           </div>
         )}
 

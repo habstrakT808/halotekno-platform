@@ -465,6 +465,8 @@ model Mitra {
   weekendHours String? // e.g., "10:00 - 16:00"
   rating      Float    @default(0)
   totalReview Int      @default(0)
+  totalViews  Int      @default(0) // Track profile page visits
+  totalInquiries Int   @default(0) // Track phone/WhatsApp clicks
   isApproved  Boolean  @default(false)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())

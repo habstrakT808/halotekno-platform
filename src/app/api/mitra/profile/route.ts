@@ -122,6 +122,8 @@ export async function POST(request: NextRequest) {
           features: body.features || [],
           weekdayHours: body.weekdayHours || null,
           weekendHours: body.weekendHours || null,
+          latitude: body.latitude || null,
+          longitude: body.longitude || null,
           // Delete existing services and images, will be recreated
         },
         include: {
@@ -156,6 +158,8 @@ export async function POST(request: NextRequest) {
           features: body.features || [],
           weekdayHours: body.weekdayHours || null,
           weekendHours: body.weekendHours || null,
+          latitude: body.latitude || null,
+          longitude: body.longitude || null,
           isApproved: true, // Auto-approve since user is already approved
         },
         include: {

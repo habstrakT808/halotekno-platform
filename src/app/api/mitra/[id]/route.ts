@@ -4,10 +4,10 @@ import prisma from '@/lib/db'
 // GET /api/mitra/[id] - Get detailed mitra profile by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Fetch mitra with all relations
     const mitra = await prisma.mitra.findUnique({
@@ -90,6 +90,8 @@ export async function GET(
       features: mitra.features,
       weekdayHours: mitra.weekdayHours,
       weekendHours: mitra.weekendHours,
+      latitude: mitra.latitude,
+      longitude: mitra.longitude,
       rating: mitra.rating,
       totalReview: mitra.totalReview,
       isOpen,
