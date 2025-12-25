@@ -22,7 +22,19 @@ export default function BlogPage() {
   const articles = getArticles()
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40 text-gray-900">
+    <div className="min-h-screen relative text-gray-900">
+      {/* Background Image with Overlay */}
+      <div className="fixed inset-0 -z-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              'url(https://images.unsplash.com/photo-1556656793-08538906a9f8?w=1920&q=80)',
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.92] via-blue-50/[0.99] to-white/[0.92]"></div>
+      </div>
+
       <Navbar variant="light" />
       <main className="pt-16">
         <BlogHero />

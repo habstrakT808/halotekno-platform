@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Menu, X, ChevronDown, ShoppingBag, Heart, Settings, LayoutDashboard } from 'lucide-react'
+import CartIcon from '@/components/cart/cart-icon'
 
 interface NavbarProps {
   variant?: 'dark' | 'light'
@@ -11,6 +12,8 @@ interface NavbarProps {
 
 export function Navbar({ variant = 'dark' }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [layananOpen, setLayananOpen] = useState(false)
   const { data: session, status } = useSession()
 
   useEffect(() => {
@@ -21,90 +24,387 @@ export function Navbar({ variant = 'dark' }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setLayananOpen(false)
+  }, [])
+
   const isLight = variant === 'light'
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
+    if (mobileMenuOpen) {
+      setLayananOpen(false)
+    }
+  }
 
   return (
     <nav
-      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
-        isLight
-          ? scrolled
-            ? 'bg-white/95 shadow-lg backdrop-blur-md'
-            : 'bg-white/90 shadow-md backdrop-blur-sm'
-          : scrolled
-            ? 'bg-gray-900/95 shadow-lg backdrop-blur-md'
-            : 'bg-transparent'
-      }`}
+      className={`fixed top-0 z-50 w-full transition-all duration-500 ${isLight
+        ? scrolled || mobileMenuOpen
+          ? 'bg-white/95 shadow-lg backdrop-blur-md'
+          : 'bg-white/90 shadow-md backdrop-blur-sm'
+        : scrolled || mobileMenuOpen
+          ? 'bg-gray-900/95 shadow-lg backdrop-blur-md'
+          : 'bg-transparent'
+        }`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between sm:h-20">
           <Link
             href="/"
-            className={`bg-gradient-to-r text-2xl font-bold sm:text-3xl ${
-              isLight
-                ? 'from-cyan-600 to-blue-600'
-                : 'from-cyan-400 to-blue-500'
-            } bg-clip-text text-transparent`}
+            className={`bg-gradient-to-r text-2xl font-bold sm:text-3xl ${isLight
+              ? 'from-cyan-600 to-blue-600'
+              : 'from-cyan-400 to-blue-500'
+              } bg-clip-text text-transparent`}
           >
             HaloTekno
           </Link>
 
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation Menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <div className="relative group">
+              <button
+                className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors ${isLight
+                  ? 'text-gray-700 hover:text-blue-600'
+                  : 'text-gray-100 hover:text-cyan-400'
+                  }`}
+              >
+                Layanan
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              {/* Dropdown Menu */}
+              <div className={`absolute left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ${isLight ? 'bg-white' : 'bg-gray-800'
+                } rounded-lg shadow-lg py-2`}>
+                <Link
+                  href="/teknisi"
+                  className={`block px-4 py-2 text-sm transition-colors ${isLight
+                    ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                    }`}
+                >
+                  Servis HP
+                </Link>
+                <Link
+                  href="/sparepart"
+                  className={`block px-4 py-2 text-sm transition-colors ${isLight
+                    ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                    }`}
+                >
+                  Sparepart
+                </Link>
+                <Link
+                  href="/sewa-alat"
+                  className={`block px-4 py-2 text-sm transition-colors ${isLight
+                    ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                    }`}
+                >
+                  Sewa Alat
+                </Link>
+              </div>
+            </div>
+
+            <Link
+              href="/about"
+              className={`px-3 py-2 text-sm font-medium transition-colors ${isLight
+                ? 'text-gray-700 hover:text-blue-600'
+                : 'text-gray-100 hover:text-cyan-400'
+                }`}
+            >
+              Tentang
+            </Link>
+
+            <Link
+              href="/blog"
+              className={`px-3 py-2 text-sm font-medium transition-colors ${isLight
+                ? 'text-gray-700 hover:text-blue-600'
+                : 'text-gray-100 hover:text-cyan-400'
+                }`}
+            >
+              Blog
+            </Link>
+          </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Cart Icon */}
+            <CartIcon variant={isLight ? 'light' : 'dark'} />
+
             {status === 'loading' ? (
               <div
-                className={`h-8 w-8 border-2 ${
-                  isLight ? 'border-blue-600' : 'border-cyan-500'
-                } animate-spin rounded-full border-t-transparent`}
+                className={`h-8 w-8 border-2 ${isLight ? 'border-blue-600' : 'border-cyan-500'
+                  } animate-spin rounded-full border-t-transparent`}
               ></div>
             ) : session ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/dashboard"
-                  className={`hidden items-center gap-2 px-4 py-2 text-sm font-medium sm:flex ${
-                    isLight
-                      ? 'text-gray-700 hover:text-blue-600'
-                      : 'hover:text-cyan-400'
-                  } transition-colors`}
-                >
-                  <User className="h-4 w-4" />
-                  {session.user.name || 'Dashboard'}
-                </Link>
+              <div className="relative group">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className={`flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 ${
-                    isLight
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-gray-800 hover:bg-gray-700'
-                  } rounded-full text-sm font-semibold transition-all duration-300 sm:text-base`}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isLight
+                    ? 'text-gray-700 hover:bg-gray-100'
+                    : 'text-gray-100 hover:bg-gray-800'
+                    }`}
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Keluar</span>
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isLight ? 'bg-blue-100' : 'bg-gray-700'}`}>
+                    <User className={`h-4 w-4 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
+                  </div>
+                  <span className="max-w-[120px] truncate">{session.user.name || 'Akun Saya'}</span>
+                  <ChevronDown className="h-4 w-4" />
                 </button>
+                {/* Profile Dropdown */}
+                <div className={`absolute right-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ${isLight ? 'bg-white' : 'bg-gray-800'} rounded-xl shadow-lg py-2 border ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>
+                  <div className={`px-4 py-3 border-b ${isLight ? 'border-gray-200' : 'border-gray-700'}`}>
+                    <p className={`text-sm font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>
+                      {session.user.name || 'User'}
+                    </p>
+                    <p className={`text-xs truncate ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {session.user.email}
+                    </p>
+                  </div>
+                  <Link
+                    href={
+                      session.user.role === 'SUPER_ADMIN' || session.user.role === 'ADMIN'
+                        ? '/dashboard/admin'
+                        : session.user.role === 'MITRA'
+                          ? '/dashboard/mitra'
+                          : '/dashboard/customer'
+                    }
+                    className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isLight
+                      ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                      : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                      }`}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  {/* Customer-only menu items */}
+                  {session.user.role === 'CUSTOMER' && (
+                    <>
+                      <Link
+                        href="/dashboard/customer/orders"
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isLight
+                          ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                          : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                          }`}
+                      >
+                        <ShoppingBag className="h-4 w-4" />
+                        Pesanan Saya
+                      </Link>
+                      <Link
+                        href="/dashboard/customer/wishlist"
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isLight
+                          ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                          : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                          }`}
+                      >
+                        <Heart className="h-4 w-4" />
+                        Wishlist
+                      </Link>
+                      <Link
+                        href="/dashboard/customer/settings"
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isLight
+                          ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                          : 'text-gray-100 hover:bg-gray-700 hover:text-cyan-400'
+                          }`}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Pengaturan
+                      </Link>
+                    </>
+                  )}
+                  <div className={`my-2 border-t ${isLight ? 'border-gray-200' : 'border-gray-700'}`}></div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isLight
+                      ? 'text-red-600 hover:bg-red-50'
+                      : 'text-red-400 hover:bg-gray-700'
+                      }`}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Keluar
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <Link
                   href="/login"
-                  className={`px-4 py-2 text-sm font-semibold sm:px-6 sm:py-3 sm:text-base ${
-                    isLight
-                      ? 'text-gray-700 hover:text-blue-600'
-                      : 'hover:text-cyan-400'
-                  } transition-colors`}
+                  className={`px-6 py-3 text-sm font-semibold ${isLight
+                    ? 'text-gray-700 hover:text-blue-600'
+                    : 'text-gray-100 hover:text-cyan-400'
+                    } transition-colors`}
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/register"
-                  className={`rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 font-semibold text-white hover:shadow-lg sm:px-8 sm:py-3 ${
-                    isLight
-                      ? 'hover:shadow-blue-500/50'
-                      : 'hover:shadow-cyan-500/50'
-                  } transform text-sm transition-all duration-300 hover:scale-105 sm:text-base`}
+                  className={`rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3 font-semibold text-white hover:shadow-lg ${isLight
+                    ? 'hover:shadow-blue-500/50'
+                    : 'hover:shadow-cyan-500/50'
+                    } transform text-sm transition-all duration-300 hover:scale-105`}
                 >
                   Daftar
                 </Link>
               </div>
             )}
           </div>
+
+          {/* Mobile Burger Button */}
+          <button
+            onClick={toggleMobileMenu}
+            className={`md:hidden p-2 rounded-lg transition-colors ${isLight
+              ? 'text-gray-700 hover:bg-gray-100'
+              : 'text-white hover:bg-gray-800'
+              }`}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+      >
+        <div className={`px-4 py-4 space-y-2 ${isLight ? 'bg-white border-t border-gray-100' : 'bg-gray-900 border-t border-gray-800'
+          }`}>
+          {/* Layanan Dropdown */}
+          <div>
+            <button
+              onClick={() => setLayananOpen(!layananOpen)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-left font-medium transition-colors ${isLight
+                ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                : 'text-gray-100 hover:bg-gray-800 hover:text-cyan-400'
+                }`}
+            >
+              Layanan
+              <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${layananOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-200 ${layananOpen ? 'max-h-40' : 'max-h-0'}`}>
+              <div className="pl-4 py-2 space-y-1">
+                <Link
+                  href="/teknisi"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm transition-colors ${isLight
+                    ? 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-cyan-400'
+                    }`}
+                >
+                  Servis HP
+                </Link>
+                <Link
+                  href="/sparepart"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm transition-colors ${isLight
+                    ? 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-cyan-400'
+                    }`}
+                >
+                  Sparepart
+                </Link>
+                <Link
+                  href="/sewa-alat"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm transition-colors ${isLight
+                    ? 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-cyan-400'
+                    }`}
+                >
+                  Sewa Alat
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Other Links */}
+          <Link
+            href="/about"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isLight
+              ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+              : 'text-gray-100 hover:bg-gray-800 hover:text-cyan-400'
+              }`}
+          >
+            Tentang
+          </Link>
+
+          <Link
+            href="/blog"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isLight
+              ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+              : 'text-gray-100 hover:bg-gray-800 hover:text-cyan-400'
+              }`}
+          >
+            Blog
+          </Link>
+
+          {/* Divider */}
+          <div className={`my-3 border-t ${isLight ? 'border-gray-200' : 'border-gray-700'}`}></div>
+
+          {/* Mobile Auth Buttons */}
+          {status === 'loading' ? (
+            <div className="flex justify-center py-4">
+              <div
+                className={`h-8 w-8 border-2 ${isLight ? 'border-blue-600' : 'border-cyan-500'
+                  } animate-spin rounded-full border-t-transparent`}
+              ></div>
+            </div>
+          ) : session ? (
+            <div className="space-y-2">
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isLight
+                  ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                  : 'text-gray-100 hover:bg-gray-800 hover:text-cyan-400'
+                  }`}
+              >
+                <User className="h-5 w-5" />
+                {session.user.name || 'Dashboard'}
+              </Link>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  signOut({ callbackUrl: '/' })
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isLight
+                  ? 'text-red-600 hover:bg-red-50'
+                  : 'text-red-400 hover:bg-gray-800'
+                  }`}
+              >
+                <LogOut className="h-5 w-5" />
+                Keluar
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block px-4 py-3 rounded-lg font-medium text-center transition-colors ${isLight
+                  ? 'text-gray-700 hover:bg-gray-100'
+                  : 'text-gray-100 hover:bg-gray-800'
+                  }`}
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 rounded-lg font-medium text-center text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg transition-all"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

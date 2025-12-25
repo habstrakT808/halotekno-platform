@@ -47,12 +47,14 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         phone: phone || null,
         role,
+        mitraStatus: role === 'MITRA' ? 'PENDING' : null, // Set PENDING for mitra
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        mitraStatus: true,
       },
     })
 

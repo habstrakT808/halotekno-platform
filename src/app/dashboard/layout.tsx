@@ -1,12 +1,8 @@
-import { requireAuth } from '@/lib/auth'
-
 export default async function DashboardRootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  await requireAuth()
-
-  // Don't wrap with DashboardLayout here - let child layouts handle it
+  // Auth check moved to individual child layouts (admin/mitra require auth, customer is public)
   return <>{children}</>
 }

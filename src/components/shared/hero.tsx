@@ -69,7 +69,7 @@ export default function Hero() {
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              href="/teknisi"
+              href="/dashboard/customer"
               className="transform rounded-full border-2 border-blue-300 bg-white px-8 py-4 text-lg font-semibold text-blue-700 transition-all duration-300 hover:scale-105 hover:border-blue-400 hover:bg-blue-50"
             >
               Lihat Katalog

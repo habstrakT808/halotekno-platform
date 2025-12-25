@@ -1,5 +1,7 @@
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
+import AddToCartButton from '@/components/cart/add-to-cart-button'
+import ImageGallery from '@/components/catalog/image-gallery'
 import {
   Star,
   ShoppingCart,
@@ -78,8 +80,8 @@ export default function SparepartDetailPage({
       <Navbar variant="light" />
 
       <main className="container mx-auto px-4 pb-8 pt-24">
-        {/* Breadcrumb */}
-        <div className="mb-6 text-sm text-gray-600">
+        {/* Breadcrumb - Hidden on mobile */}
+        <div className="mb-6 hidden text-sm text-gray-600 sm:block">
           <Link href="/" className="hover:text-blue-600">
             Home
           </Link>
@@ -98,23 +100,10 @@ export default function SparepartDetailPage({
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Image Gallery */}
-                <div>
-                  <img
-                    src={productDetail.images[0]}
-                    alt={productDetail.name}
-                    className="mb-4 aspect-square w-full rounded-xl object-cover"
-                  />
-                  <div className="grid grid-cols-3 gap-2">
-                    {productDetail.images.map((img, index) => (
-                      <img
-                        key={index}
-                        src={img}
-                        alt={`${productDetail.name} ${index + 1}`}
-                        className="aspect-square w-full cursor-pointer rounded-lg border-2 border-gray-200 object-cover transition-colors hover:border-blue-500"
-                      />
-                    ))}
-                  </div>
-                </div>
+                <ImageGallery
+                  images={productDetail.images}
+                  productName={productDetail.name}
+                />
 
                 {/* Product Info */}
                 <div>
@@ -142,11 +131,10 @@ export default function SparepartDetailPage({
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                          productDetail.stock > 0
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
+                        className={`rounded-full px-3 py-1 text-sm font-semibold ${productDetail.stock > 0
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                          }`}
                       >
                         {productDetail.stock > 0
                           ? `Stok: ${productDetail.stock}`
@@ -177,12 +165,20 @@ export default function SparepartDetailPage({
                       <span>Verified Seller</span>
                     </div>
                   </div>
+
+                  {/* Description - Desktop only */}
+                  <div className="hidden md:block border-t border-gray-200 pt-4">
+                    <h3 className="mb-2 font-bold text-gray-900">Deskripsi Produk</h3>
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      {productDetail.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+            {/* Description - Mobile only */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 md:hidden">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
                 Deskripsi Produk
               </h2>
@@ -201,10 +197,10 @@ export default function SparepartDetailPage({
                   ([key, value]) => (
                     <div
                       key={key}
-                      className="flex border-b border-gray-200 pb-3 last:border-0"
+                      className="flex flex-col gap-1 border-b border-gray-200 pb-3 last:border-0 sm:flex-row sm:gap-0"
                     >
-                      <span className="w-1/3 text-gray-600">{key}</span>
-                      <span className="w-2/3 font-medium text-gray-900">
+                      <span className="text-sm text-gray-600 sm:w-1/3 sm:text-base">{key}</span>
+                      <span className="font-medium text-gray-900 sm:w-2/3">
                         {value}
                       </span>
                     </div>
@@ -236,11 +232,10 @@ export default function SparepartDetailPage({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating
-                              ? 'fill-yellow-500 text-yellow-500'
-                              : 'text-gray-300'
-                          }`}
+                          className={`h-4 w-4 ${i < review.rating
+                            ? 'fill-yellow-500 text-yellow-500'
+                            : 'text-gray-300'
+                            }`}
                         />
                       ))}
                     </div>
@@ -253,7 +248,7 @@ export default function SparepartDetailPage({
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-6">
+            <div className="sticky top-24 rounded-2xl border border-gray-200 bg-white p-6">
               <h3 className="mb-4 text-lg font-bold text-gray-900">
                 Atur Jumlah
               </h3>
@@ -287,10 +282,17 @@ export default function SparepartDetailPage({
                 </div>
               </div>
 
-              <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-semibold text-white transition-all hover:from-blue-600 hover:to-cyan-600">
-                <ShoppingCart className="h-5 w-5" />
-                Tambah ke Keranjang
-              </button>
+              <AddToCartButton
+                product={{
+                  id: productDetail.id,
+                  name: productDetail.name,
+                  price: productDetail.price,
+                  image: productDetail.images[0],
+                  type: 'PRODUCT',
+                  stock: productDetail.stock,
+                }}
+                className="mb-3 w-full"
+              />
 
               <button className="w-full rounded-lg border-2 border-blue-500 py-3 font-semibold text-blue-600 transition-all hover:bg-blue-50">
                 Beli Sekarang

@@ -1,5 +1,7 @@
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
+import AddToCartButton from '@/components/cart/add-to-cart-button'
+import ImageGallery from '@/components/catalog/image-gallery'
 import {
   Star,
   Calendar,
@@ -107,23 +109,10 @@ export default function SewaAlatDetailPage({
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Image Gallery */}
-                <div>
-                  <img
-                    src={itemDetail.images[0]}
-                    alt={itemDetail.name}
-                    className="mb-4 aspect-square w-full rounded-xl object-cover"
-                  />
-                  <div className="grid grid-cols-3 gap-2">
-                    {itemDetail.images.map((img, index) => (
-                      <img
-                        key={index}
-                        src={img}
-                        alt={`${itemDetail.name} ${index + 1}`}
-                        className="aspect-square w-full cursor-pointer rounded-lg border-2 border-gray-200 object-cover transition-colors hover:border-blue-500"
-                      />
-                    ))}
-                  </div>
-                </div>
+                <ImageGallery
+                  images={itemDetail.images}
+                  productName={itemDetail.name}
+                />
 
                 {/* Item Info */}
                 <div>
@@ -165,11 +154,10 @@ export default function SewaAlatDetailPage({
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                          itemDetail.availability
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-orange-100 text-orange-700'
-                        }`}
+                        className={`rounded-full px-3 py-1 text-sm font-semibold ${itemDetail.availability
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700'
+                          }`}
                       >
                         {itemDetail.availability ? 'Tersedia' : 'Sedang Disewa'}
                       </span>
@@ -272,11 +260,10 @@ export default function SewaAlatDetailPage({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating
-                              ? 'fill-yellow-500 text-yellow-500'
-                              : 'text-gray-300'
-                          }`}
+                          className={`h-4 w-4 ${i < review.rating
+                            ? 'fill-yellow-500 text-yellow-500'
+                            : 'text-gray-300'
+                            }`}
                         />
                       ))}
                     </div>
@@ -289,7 +276,7 @@ export default function SewaAlatDetailPage({
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-6">
+            <div className="sticky top-24 rounded-2xl border border-gray-200 bg-white p-6">
               <h3 className="mb-4 text-lg font-bold text-gray-900">
                 Booking Sewa
               </h3>
@@ -350,10 +337,16 @@ export default function SewaAlatDetailPage({
                 </div>
               </div>
 
-              <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-semibold text-white transition-all hover:from-blue-600 hover:to-cyan-600">
-                <Calendar className="h-5 w-5" />
-                Sewa Sekarang
-              </button>
+              <AddToCartButton
+                product={{
+                  id: itemDetail.id,
+                  name: itemDetail.name,
+                  price: itemDetail.dailyRate,
+                  image: itemDetail.images[0],
+                  type: 'RENTAL',
+                }}
+                className="mb-3 w-full"
+              />
 
               <button className="w-full rounded-lg border-2 border-blue-500 py-3 font-semibold text-blue-600 transition-all hover:bg-blue-50">
                 Chat Pemilik

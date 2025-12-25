@@ -54,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           role: user.role,
           image: user.image,
+          mitraStatus: user.mitraStatus,
         }
       },
     }),
@@ -63,6 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.mitraStatus = (user as any).mitraStatus
       }
       return token
     },
@@ -70,6 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+          ; (session.user as any).mitraStatus = token.mitraStatus
       }
       return session
     },

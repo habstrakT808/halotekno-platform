@@ -32,7 +32,20 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Email atau password salah')
       } else {
-        router.push('/dashboard/customer')
+        // Fetch user data to check role
+        const userRes = await fetch('/api/auth/me')
+        if (userRes.ok) {
+          const userData = await userRes.json()
+          if (userData.role === 'ADMIN' || userData.role === 'SUPER_ADMIN') {
+            router.push('/dashboard/admin')
+          } else if (userData.role === 'MITRA') {
+            router.push('/dashboard/mitra')
+          } else {
+            router.push('/dashboard/customer')
+          }
+        } else {
+          router.push('/dashboard/customer')
+        }
         router.refresh()
       }
     } catch (error) {
@@ -44,7 +57,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn('google', { callbackUrl: '/dashboard/customer' })
+    await signIn('google', { callbackUrl: '/api/auth/redirect' })
   }
 
   return (

@@ -18,6 +18,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'CUSTOMER', // Default to customer
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +46,8 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          role: formData.role,
         }),
       })
 
@@ -65,7 +68,12 @@ export default function RegisterPage() {
         setError('Registrasi berhasil, silakan login')
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        router.push('/dashboard/customer')
+        // Redirect based on role
+        if (formData.role === 'MITRA') {
+          router.push('/dashboard/mitra/pending')
+        } else {
+          router.push('/dashboard/customer')
+        }
         router.refresh()
       }
     } catch (error: any) {
@@ -118,6 +126,83 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
+
+            {/* Role Selection Tabs */}
+            <div className="mb-6">
+              <p className="mb-3 text-center text-sm font-medium text-gray-700">Daftar Sebagai</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, role: 'CUSTOMER' })}
+                  className={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all ${formData.role === 'CUSTOMER'
+                    ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50'
+                    : 'border-gray-200 bg-white hover:border-blue-300'
+                    }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <User className={`mb-2 h-8 w-8 ${formData.role === 'CUSTOMER' ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <span className={`font-semibold ${formData.role === 'CUSTOMER' ? 'text-blue-600' : 'text-gray-700'}`}>
+                      Customer
+                    </span>
+                    <span className="mt-1 text-xs text-gray-500">Pengguna Biasa</span>
+                  </div>
+                  {formData.role === 'CUSTOMER' && (
+                    <div className="absolute right-2 top-2">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, role: 'MITRA' })}
+                  className={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all ${formData.role === 'MITRA'
+                    ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50'
+                    : 'border-gray-200 bg-white hover:border-green-300'
+                    }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <svg
+                      className={`mb-2 h-8 w-8 ${formData.role === 'MITRA' ? 'text-green-600' : 'text-gray-400'}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                    <span className={`font-semibold ${formData.role === 'MITRA' ? 'text-green-600' : 'text-gray-700'}`}>
+                      Mitra
+                    </span>
+                    <span className="mt-1 text-xs text-gray-500">Partner Bisnis</span>
+                  </div>
+                  {formData.role === 'MITRA' && (
+                    <div className="absolute right-2 top-2">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              </div>
+              {formData.role === 'MITRA' && (
+                <div className="mt-3 rounded-lg bg-blue-50 p-3 text-center">
+                  <p className="text-sm text-blue-700">
+                    ℹ️ Akun mitra akan direview oleh admin sebelum diaktifkan
+                  </p>
+                </div>
+              )}
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name Field */}

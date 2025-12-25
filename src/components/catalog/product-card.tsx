@@ -94,12 +94,12 @@ export function ProductCard({
         )}
 
         {/* Action Button - Hidden on mobile */}
-        <button
-          onClick={onAction}
-          className="hidden w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-2 font-medium text-white transition-all hover:from-blue-600 hover:to-cyan-600 md:block"
+        <Link
+          href={href}
+          className="hidden w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-2 text-center font-medium text-white transition-all hover:from-blue-600 hover:to-cyan-600 md:block"
         >
           {actionLabel}
-        </button>
+        </Link>
       </div>
     </div>
   )
