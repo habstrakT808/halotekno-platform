@@ -1,0 +1,152 @@
+{
+  "timestamp": "2025-12-25T23:10:34.986Z",
+  "data": {
+    "users": [
+      {
+        "id": "cmjjsxf7i0000r5qc0adehffn",
+        "name": "Hafiyan Al Muqaffi Umary",
+        "email": "jhodywiraputra@gmail.com",
+        "emailVerified": null,
+        "image": null,
+        "password": "$2b$10$5dqrzemspIqqRIjqoMpmx.6qyDjbBTQQoX0c5S55Oid69MSWh09A.",
+        "role": "CUSTOMER",
+        "phone": "81368071901",
+        "isActive": true,
+        "mitraStatus": null,
+        "createdAt": "2025-12-24T09:18:40.445Z",
+        "updatedAt": "2025-12-24T09:18:40.445Z"
+      },
+      {
+        "id": "cmjl7gxk90000r5k0jkfjq6u9",
+        "name": "Admin HaloTekno",
+        "email": "admin@halotekno.com",
+        "emailVerified": null,
+        "image": null,
+        "password": "$2b$12$bNiEtXmrqEDYkVH6cLPtb.fPRUVD04qspFNnOp9oiNaoeUwYb/CQm",
+        "role": "SUPER_ADMIN",
+        "phone": null,
+        "isActive": true,
+        "mitraStatus": null,
+        "createdAt": "2025-12-25T08:53:31.494Z",
+        "updatedAt": "2025-12-25T10:16:00.395Z"
+      },
+      {
+        "id": "cmjlc7lre0002r5ugyszb6iid",
+        "name": "John Doe",
+        "email": "john@gmail.com",
+        "emailVerified": null,
+        "image": null,
+        "password": "$2b$10$DkzhtYp6qNHx2BWBIT8fdupbjteY0clEsoJfW13Qdi/aP46Y4a55e",
+        "role": "MITRA",
+        "phone": null,
+        "isActive": true,
+        "mitraStatus": "APPROVED",
+        "createdAt": "2025-12-25T11:06:14.379Z",
+        "updatedAt": "2025-12-25T13:07:03.586Z"
+      }
+    ],
+    "accounts": [],
+    "sessions": [],
+    "mitras": [
+      {
+        "id": "cmjlxo5tw0001r5448gbzpwiu",
+        "userId": "cmjlc7lre0002r5ugyszb6iid",
+        "businessName": "Hafiyan TechCare Pro Service",
+        "tagline": "Solusi Teknologi Terpercaya Anda Bersama Hafiyan",
+        "description": "TechCare Pro Service adalah pusat servis elektronik terpercaya dengan pengalaman lebih dari 10 tahun. Kami melayani berbagai jenis perbaikan smartphone, laptop, PC, dan perangkat elektronik lainnya dengan teknisi bersertifikat dan spare part original. Komitmen kami adalah memberikan pelayanan terbaik dengan harga yang kompetitif dan garansi resmi untuk setiap perbaikan.",
+        "banner": "https://res.cloudinary.com/dzwuekdyv/image/upload/v1766696708/halotekno/banners/tyglijlcnzc9yngatssw.jpg",
+        "address": "Jl. Candi Bima II, Mojolangu, Kec. Lowokwaru, Kota Malang, Jawa Timur, Indonesia",
+        "city": "Kota Malang",
+        "province": "Indonesia",
+        "latitude": -7.943984,
+        "longitude": 112.6346754,
+        "phone": "+62 812-3456-7890",
+        "whatsapp": "+62 812-3456-7890",
+        "email": "info@techcarepro.com",
+        "website": "www.techcarepro.com",
+        "features": ["24 Jam", "Pasti Ori", "Top Brands", "Pilihan Unggul"],
+        "weekdayHours": "Senin - Jumat: 09:00 - 20:00",
+        "weekendHours": "Sabtu - Minggu: 10:00 - 18:00",
+        "rating": 5,
+        "totalReview": 1,
+        "totalViews": 23,
+        "totalInquiries": 3,
+        "isApproved": true,
+        "isActive": true,
+        "createdAt": "2025-12-25T21:06:58.820Z",
+        "updatedAt": "2025-12-25T23:02:01.813Z"
+      }
+    ],
+    "mitraServices": [
+      {
+        "id": "cmjm1c1mu0000r598zgr080u4",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "name": "Servis LCD Smartphone",
+        "description": null,
+        "icon": "📱",
+        "price": "Rp 150.000",
+        "createdAt": "2025-12-25T22:49:31.975Z",
+        "updatedAt": "2025-12-25T22:49:31.975Z"
+      },
+      {
+        "id": "cmjm1c1mu0001r598seu38n9r",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "name": "Servis Laptop/Notebook",
+        "description": null,
+        "icon": "💻",
+        "price": "Rp 200.000",
+        "createdAt": "2025-12-25T22:49:31.975Z",
+        "updatedAt": "2025-12-25T22:49:31.975Z"
+      },
+      {
+        "id": "cmjm1c1mu0002r598072sje9j",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "name": "Rakit PC Gaming",
+        "description": null,
+        "icon": "💻",
+        "price": "Rp 500.000",
+        "createdAt": "2025-12-25T22:49:31.975Z",
+        "updatedAt": "2025-12-25T22:49:31.975Z"
+      }
+    ],
+    "mitraImages": [
+      {
+        "id": "cmjm1c1my0003r598mx9euk4e",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "url": "https://res.cloudinary.com/dzwuekdyv/image/upload/v1766696639/halotekno/gallery/rypkaaxiyswyl8dou5vy.jpg",
+        "isBanner": false,
+        "createdAt": "2025-12-25T22:49:31.978Z",
+        "updatedAt": "2025-12-25T22:49:31.978Z"
+      },
+      {
+        "id": "cmjm1c1my0004r598qrkbpoye",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "url": "https://res.cloudinary.com/dzwuekdyv/image/upload/v1766696648/halotekno/gallery/yurpebk0fyxeqylodhhj.jpg",
+        "isBanner": false,
+        "createdAt": "2025-12-25T22:49:31.978Z",
+        "updatedAt": "2025-12-25T22:49:31.978Z"
+      },
+      {
+        "id": "cmjm1c1my0005r598q1p4mhoq",
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "url": "https://res.cloudinary.com/dzwuekdyv/image/upload/v1766696683/halotekno/gallery/y0mbmdugd14va3fqrnpv.jpg",
+        "isBanner": false,
+        "createdAt": "2025-12-25T22:49:31.978Z",
+        "updatedAt": "2025-12-25T22:49:31.978Z"
+      }
+    ],
+    "reviews": [
+      {
+        "id": "cmjlypu7j000br544klbtekoo",
+        "userId": "cmjjsxf7i0000r5qc0adehffn",
+        "orderId": null,
+        "mitraId": "cmjlxo5tw0001r5448gbzpwiu",
+        "type": "MITRA",
+        "rating": 5,
+        "comment": "Keren banget! Edited!",
+        "createdAt": "2025-12-25T21:36:16.688Z",
+        "updatedAt": "2025-12-25T21:37:23.808Z"
+      }
+    ]
+  }
+}
