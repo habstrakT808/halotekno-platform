@@ -142,24 +142,24 @@ export function Footer({ variant = 'dark' }: FooterProps) {
               }`}
             >
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/about"
                   className={`transition-colors ${
                     isLight ? 'hover:text-blue-600' : 'hover:text-cyan-400'
                   }`}
                 >
                   Tentang Kami
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/blog"
                   className={`transition-colors ${
                     isLight ? 'hover:text-blue-600' : 'hover:text-cyan-400'
                   }`}
                 >
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
                 <a
