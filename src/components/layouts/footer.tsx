@@ -265,6 +265,49 @@ export function Footer({ variant = 'dark' }: FooterProps) {
               <span>Jakarta, Indonesia</span>
             </li>
           </ul>
+
+          {/* Social Media - Mobile */}
+          <div className="mt-6">
+            <h4
+              className={`mb-4 text-lg font-bold ${
+                isLight ? 'text-gray-900' : 'text-white'
+              }`}
+            >
+              Ikuti Kami
+            </h4>
+            <div className="flex gap-3">
+              <a
+                href="#"
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
+                  isLight
+                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
+                    : 'bg-gray-800 hover:bg-cyan-500'
+                }`}
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
+                  isLight
+                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
+                    : 'bg-gray-800 hover:bg-cyan-500'
+                }`}
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
+                  isLight
+                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
+                    : 'bg-gray-800 hover:bg-cyan-500'
+                }`}
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* Copyright */}

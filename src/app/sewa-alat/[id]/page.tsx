@@ -79,16 +79,17 @@ const reviews = [
   },
 ]
 
-export default function SewaAlatDetailPage({
+export default async function SewaAlatDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
       <Navbar variant="light" />
 
-      <main className="container mx-auto px-4 pb-8 pt-24">
+      <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm text-gray-600">
           <Link href="/" className="hover:text-blue-600">
@@ -154,10 +155,11 @@ export default function SewaAlatDetailPage({
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-semibold ${itemDetail.availability
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-orange-100 text-orange-700'
-                          }`}
+                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                          itemDetail.availability
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-orange-100 text-orange-700'
+                        }`}
                       >
                         {itemDetail.availability ? 'Tersedia' : 'Sedang Disewa'}
                       </span>
@@ -260,10 +262,11 @@ export default function SewaAlatDetailPage({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${i < review.rating
-                            ? 'fill-yellow-500 text-yellow-500'
-                            : 'text-gray-300'
-                            }`}
+                          className={`h-4 w-4 ${
+                            i < review.rating
+                              ? 'fill-yellow-500 text-yellow-500'
+                              : 'text-gray-300'
+                          }`}
                         />
                       ))}
                     </div>

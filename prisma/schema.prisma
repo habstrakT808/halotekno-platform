@@ -448,7 +448,9 @@ model Mitra {
   id          String   @id @default(cuid())
   userId      String   @unique
   businessName String
+  tagline     String?  // Short tagline for the business
   description String?
+  banner      String?  // Main banner image URL
   address     String
   city        String
   province    String
@@ -456,6 +458,11 @@ model Mitra {
   longitude   Float?
   phone       String
   whatsapp    String?
+  email       String?  // Contact email
+  website     String?  // Website URL
+  features    String[] // Array of business features/strengths
+  weekdayHours String? // e.g., "09:00 - 18:00"
+  weekendHours String? // e.g., "10:00 - 16:00"
   rating      Float    @default(0)
   totalReview Int      @default(0)
   isApproved  Boolean  @default(false)
@@ -481,6 +488,8 @@ model MitraService {
   mitraId     String
   name        String
   description String?
+  icon        String?  // Emoji icon for the service
+  price       String?  // Price display (flexible string format)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

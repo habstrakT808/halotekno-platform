@@ -149,7 +149,7 @@ export default function SewaAlatPage() {
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
       <Navbar variant="light" />
 
-      <main className="container mx-auto px-4 pb-8 pt-24">
+      <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="mb-8">
           <h1 className="mb-3 text-4xl font-bold text-gray-900">

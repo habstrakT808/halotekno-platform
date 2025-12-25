@@ -70,16 +70,17 @@ const reviews = [
   },
 ]
 
-export default function SparepartDetailPage({
+export default async function SparepartDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
       <Navbar variant="light" />
 
-      <main className="container mx-auto px-4 pb-8 pt-24">
+      <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6 lg:px-8">
         {/* Breadcrumb - Hidden on mobile */}
         <div className="mb-6 hidden text-sm text-gray-600 sm:block">
           <Link href="/" className="hover:text-blue-600">
@@ -131,10 +132,11 @@ export default function SparepartDetailPage({
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-semibold ${productDetail.stock > 0
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                          }`}
+                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                          productDetail.stock > 0
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
                       >
                         {productDetail.stock > 0
                           ? `Stok: ${productDetail.stock}`
@@ -167,8 +169,10 @@ export default function SparepartDetailPage({
                   </div>
 
                   {/* Description - Desktop only */}
-                  <div className="hidden md:block border-t border-gray-200 pt-4">
-                    <h3 className="mb-2 font-bold text-gray-900">Deskripsi Produk</h3>
+                  <div className="hidden border-t border-gray-200 pt-4 md:block">
+                    <h3 className="mb-2 font-bold text-gray-900">
+                      Deskripsi Produk
+                    </h3>
                     <p className="text-sm leading-relaxed text-gray-700">
                       {productDetail.description}
                     </p>
@@ -199,7 +203,9 @@ export default function SparepartDetailPage({
                       key={key}
                       className="flex flex-col gap-1 border-b border-gray-200 pb-3 last:border-0 sm:flex-row sm:gap-0"
                     >
-                      <span className="text-sm text-gray-600 sm:w-1/3 sm:text-base">{key}</span>
+                      <span className="text-sm text-gray-600 sm:w-1/3 sm:text-base">
+                        {key}
+                      </span>
                       <span className="font-medium text-gray-900 sm:w-2/3">
                         {value}
                       </span>
@@ -232,10 +238,11 @@ export default function SparepartDetailPage({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${i < review.rating
-                            ? 'fill-yellow-500 text-yellow-500'
-                            : 'text-gray-300'
-                            }`}
+                          className={`h-4 w-4 ${
+                            i < review.rating
+                              ? 'fill-yellow-500 text-yellow-500'
+                              : 'text-gray-300'
+                          }`}
                         />
                       ))}
                     </div>
