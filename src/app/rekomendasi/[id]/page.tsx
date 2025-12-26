@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useEffect, useRef } from 'react'
+import { use, useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -74,7 +74,7 @@ export default function MitraDetailPage({
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const hasTrackedView = useRef(false)
 
-  const fetchMitra = async () => {
+  const fetchMitra = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/mitra/${resolvedParams.id}`)
@@ -90,10 +90,10 @@ export default function MitraDetailPage({
     } finally {
       setLoading(false)
     }
-  }
+  }, [resolvedParams.id])
 
   // Check if current user has already reviewed this mitra
-  const checkUserReview = async () => {
+  const checkUserReview = useCallback(async () => {
     if (!session?.user?.id || !resolvedParams.id) return
 
     try {
@@ -102,22 +102,22 @@ export default function MitraDetailPage({
 
       if (response.ok && data.reviews) {
         const userReview = data.reviews.find(
-          (review: any) => review.user.id === session.user.id
+          (review: { user: { id: string } }) => review.user.id === session.user.id
         )
         setUserHasReview(!!userReview)
       }
     } catch (error) {
       console.error('Error checking user review:', error)
     }
-  }
+  }, [session?.user?.id, resolvedParams.id])
 
   useEffect(() => {
     fetchMitra()
-  }, [resolvedParams.id])
+  }, [fetchMitra])
 
   useEffect(() => {
     checkUserReview()
-  }, [session?.user?.id, resolvedParams.id, refreshReviews])
+  }, [checkUserReview])
 
   // Track page view
   useEffect(() => {

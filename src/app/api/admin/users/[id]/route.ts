@@ -34,7 +34,7 @@ export async function PATCH(
         }
 
         // Build update data
-        const updateData: any = {}
+        const updateData: Record<string, unknown> = {}
         if (role !== undefined) updateData.role = role
         if (isActive !== undefined) updateData.isActive = isActive
         if (mitraStatus !== undefined) updateData.mitraStatus = mitraStatus

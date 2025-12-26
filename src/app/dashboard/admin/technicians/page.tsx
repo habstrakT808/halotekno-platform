@@ -14,8 +14,8 @@ import {
   Trash2,
   Mail,
   Phone,
-  CheckCircle,
-  XCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -146,6 +146,7 @@ export default function TechniciansPage() {
       toast.success('Technician deleted successfully')
       fetchData()
     } catch (error) {
+      console.error('Error deleting technician:', error)
       toast.error('Failed to delete technician')
     }
   }
@@ -170,7 +171,27 @@ export default function TechniciansPage() {
       toast.success('Mitra deleted successfully')
       fetchData()
     } catch (error) {
+      console.error('Error deleting mitra:', error)
       toast.error('Failed to delete mitra')
+    }
+  }
+
+  // Toggle technician availability
+  const handleToggleAvailability = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/technicians/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAvailable: !currentStatus }),
+      })
+
+      if (!res.ok) throw new Error('Failed to update')
+
+      toast.success('Availability updated successfully')
+      fetchData()
+    } catch (error) {
+      console.error('Error updating availability:', error)
+      toast.error('Failed to update availability')
     }
   }
 
@@ -188,6 +209,7 @@ export default function TechniciansPage() {
       toast.success(`Mitra ${approve ? 'approved' : 'rejected'} successfully`)
       fetchData()
     } catch (error) {
+      console.error('Error updating mitra status:', error)
       toast.error('Failed to update mitra status')
     }
   }
@@ -300,22 +322,20 @@ export default function TechniciansPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('technicians')}
-            className={`rounded-lg px-6 py-2 font-medium transition-all ${
-              activeTab === 'technicians'
-                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`rounded-lg px-6 py-2 font-medium transition-all ${activeTab === 'technicians'
+              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
           >
             <Shield className="mr-2 inline h-5 w-5" />
             Teknisi ({stats.totalTechnicians})
           </button>
           <button
             onClick={() => setActiveTab('mitra')}
-            className={`rounded-lg px-6 py-2 font-medium transition-all ${
-              activeTab === 'mitra'
-                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`rounded-lg px-6 py-2 font-medium transition-all ${activeTab === 'mitra'
+              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
           >
             <Store className="mr-2 inline h-5 w-5" />
             Mitra ({stats.totalMitra})
@@ -360,38 +380,39 @@ export default function TechniciansPage() {
                 key={tech.id}
                 className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {tech.user.image ? (
-                      <img
-                        src={tech.user.image}
-                        alt={tech.user.name || 'Technician'}
-                        className="h-12 w-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                        <Shield className="h-6 w-6 text-blue-600" />
+                <Link href={`/dashboard/admin/technicians/${tech.id}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {tech.user.image ? (
+                        <img
+                          src={tech.user.image}
+                          alt={tech.user.name || 'Technician'}
+                          className="h-12 w-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                          <Shield className="h-6 w-6 text-blue-600" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 hover:text-blue-600">
+                          {tech.user.name || 'N/A'}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {tech.experience} tahun pengalaman
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {tech.user.name || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {tech.experience} tahun pengalaman
-                      </p>
                     </div>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs ${tech.isAvailable
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-700'
+                        }`}
+                    >
+                      {tech.isAvailable ? 'Available' : 'Unavailable'}
+                    </span>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-1 text-xs ${
-                      tech.user.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {tech.user.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
+                </Link>
 
                 <div className="mt-4 space-y-2">
                   <div className="flex flex-wrap gap-1">
@@ -424,12 +445,25 @@ export default function TechniciansPage() {
 
                 <div className="mt-4 flex gap-2">
                   <Link
-                    href={`/dashboard/admin/technicians/${tech.id}/edit`}
-                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2 text-center text-sm font-medium text-blue-600 hover:bg-blue-100"
+                    href={`/dashboard/admin/technicians/${tech.id}`}
+                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2 text-center text-sm font-medium text-white hover:shadow-lg"
                   >
-                    <Edit className="mr-1 inline h-4 w-4" />
-                    Edit
+                    View Details
                   </Link>
+                  <button
+                    onClick={() => handleToggleAvailability(tech.id, tech.isAvailable)}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium ${tech.isAvailable
+                      ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    title={tech.isAvailable ? 'Set Unavailable' : 'Set Available'}
+                  >
+                    {tech.isAvailable ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </button>
                   <button
                     onClick={() =>
                       handleDeleteTechnician(
@@ -479,13 +513,12 @@ export default function TechniciansPage() {
                     </div>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-1 text-xs ${
-                      !mitra.isApproved
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : mitra.isActive
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                    }`}
+                    className={`rounded-full px-2 py-1 text-xs ${!mitra.isApproved
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : mitra.isActive
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                      }`}
                   >
                     {!mitra.isApproved
                       ? 'Pending'

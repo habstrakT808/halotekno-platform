@@ -40,6 +40,7 @@ export default function EditTechnicianPage({
         isAvailable: data.isAvailable,
       })
     } catch (error) {
+      console.error('Error loading technician data:', error)
       toast.error('Failed to load technician data')
     } finally {
       setLoading(false)
@@ -64,8 +65,8 @@ export default function EditTechnicianPage({
 
       toast.success('Technician updated successfully')
       router.push('/dashboard/admin/technicians')
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update technician')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update technician')
     } finally {
       setSaving(false)
     }

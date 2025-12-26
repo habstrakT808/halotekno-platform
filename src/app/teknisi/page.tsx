@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
@@ -153,7 +152,7 @@ export default function TeknisiPage() {
               onFilterChange={(filters) => {
                 const specialty = Object.values(filters)
                   .flat()
-                  .find((f: any) =>
+                  .find((f: string) =>
                     filterGroups[0].options.some((o) => o.value === f)
                   )
                 if (specialty) setSelectedSpecialty(specialty)
@@ -179,7 +178,7 @@ export default function TeknisiPage() {
                   onFilterChange={(filters) => {
                     const specialty = Object.values(filters)
                       .flat()
-                      .find((f: any) =>
+                      .find((f: string) =>
                         filterGroups[0].options.some((o) => o.value === f)
                       )
                     if (specialty) setSelectedSpecialty(specialty)

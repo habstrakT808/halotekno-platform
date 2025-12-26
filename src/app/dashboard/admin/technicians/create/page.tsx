@@ -68,8 +68,8 @@ export default function CreateTechnicianPage() {
 
       toast.success('Technician created successfully')
       router.push('/dashboard/admin/technicians')
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create technician')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to create technician')
     } finally {
       setLoading(false)
     }

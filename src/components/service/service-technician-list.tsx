@@ -5,7 +5,7 @@ import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
 import { FilterSidebar } from '@/components/catalog/filter-sidebar'
-import WhatsAppButton from '@/components/shared/whatsapp-button'
+import FloatingChatButton from '@/components/chat/floating-chat-button'
 import {
     MessageCircle,
     Wrench,
@@ -161,7 +161,6 @@ export default function ServiceTechnicianList({ serviceType }: ServicePageProps)
     }
 
     const currentService = serviceInfo[serviceType]
-    const Icon = currentService.icon
 
     // Filter technicians based on search
     const filteredTechnicians = technicianData.filter(tech =>
@@ -318,7 +317,7 @@ export default function ServiceTechnicianList({ serviceType }: ServicePageProps)
                 </div>
             </main>
 
-            <WhatsAppButton variant="fixed" />
+            <FloatingChatButton />
             <Footer variant="light" />
         </div>
     )

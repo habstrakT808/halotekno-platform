@@ -6,7 +6,16 @@ import { toast } from 'sonner'
 
 interface ProductFormModalProps {
   isOpen: boolean
-  product: any | null
+  product: {
+    id?: string
+    name?: string
+    description?: string
+    price?: number
+    stock?: number
+    category?: string
+    brand?: string
+    images?: string[]
+  } | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -128,8 +137,8 @@ export default function ProductFormModal({
       toast.success(`Product ${product ? 'updated' : 'created'} successfully!`)
       onSuccess()
       onClose()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save product')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save product')
     } finally {
       setLoading(false)
     }

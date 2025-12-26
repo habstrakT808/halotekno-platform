@@ -5,11 +5,14 @@ import Google from 'next-auth/providers/google'
 import prisma from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { loginSchema } from '@/lib/validations/auth'
+import { UserRole } from '@prisma/client'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 1 day
   },
   pages: {
     signIn: '/login',
@@ -17,8 +20,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     Credentials({
       credentials: {
@@ -48,13 +51,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
+        // Return minimal user data to keep JWT small
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          image: user.image,
-          mitraStatus: user.mitraStatus,
         }
       },
     }),
@@ -62,19 +64,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Only store essential data in JWT to keep it small
         token.id = user.id
         token.role = user.role
-        token.mitraStatus = (user as any).mitraStatus
       }
+      // Remove unnecessary fields that might bloat the token
+      delete token.picture
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.id as string
-        session.user.role = token.role as string
-          ; (session.user as any).mitraStatus = token.mitraStatus
+        session.user.role = token.role as UserRole
+
+        // Get fresh user data including image
+        const user = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { image: true },
+        })
+        if (user?.image) {
+          session.user.image = user.image
+        }
+
+        // Check if user is a technician
+        const technician = await prisma.technician.findUnique({
+          where: { userId: token.id as string },
+          select: { id: true },
+        })
+        session.user.isTechnician = !!technician
       }
       return session
+    },
+  },
+  events: {
+    // Clear old sessions when user signs in
+    async signIn({ user }) {
+      if (user?.id) {
+        try {
+          // Delete old database sessions for this user
+          await prisma.session.deleteMany({
+            where: { userId: user.id },
+          })
+        } catch (error) {
+          // Ignore errors - sessions table might not exist
+          console.log('Could not clear old sessions')
+        }
+      }
     },
   },
 })

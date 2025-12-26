@@ -6,21 +6,17 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Store,
-  Camera,
   Clock,
   Phone,
   Mail,
   Globe,
-  MapPin,
   Plus,
   X,
   Save,
   Loader2,
   CheckCircle,
   Edit3,
-  Star,
   Image as ImageIcon,
-  Trash2,
   Eye,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -74,23 +70,6 @@ const DEFAULT_PROFILE: MitraProfile = {
   },
 }
 
-const CITY_OPTIONS = [
-  'Jakarta Selatan',
-  'Jakarta Pusat',
-  'Jakarta Barat',
-  'Jakarta Utara',
-  'Jakarta Timur',
-  'Bandung',
-  'Surabaya',
-  'Yogyakarta',
-  'Semarang',
-  'Medan',
-  'Makassar',
-  'Tangerang',
-  'Bekasi',
-  'Depok',
-]
-
 const FEATURE_OPTIONS = [
   'Garansi Resmi',
   'Teknisi Bersertifikat',
@@ -139,7 +118,6 @@ export default function MitraDashboard() {
         const response = await fetch('/api/mitra/profile')
         if (response.ok) {
           const data = await response.json()
-          console.log('Fetched profile data:', data)
 
           // Store mitra ID for preview
           if (data.id) {
@@ -157,9 +135,9 @@ export default function MitraDashboard() {
             email: data.email || '',
             website: data.website || '',
             banner: data.banner || '',
-            gallery: data.images?.map((img: any) => img.url) || [],
+            gallery: data.images?.map((img: { url: string }) => img.url) || [],
             services:
-              data.services?.map((svc: any) => ({
+              data.services?.map((svc: { name: string; price?: number; icon?: string }) => ({
                 name: svc.name,
                 price: svc.price || '',
                 icon: svc.icon || '💻',
@@ -173,7 +151,6 @@ export default function MitraDashboard() {
         } else if (response.status === 404) {
           // Profile doesn't exist yet - this is OK for new mitra
           // Keep default profile state, don't reset
-          console.log('No existing profile found - using defaults')
         } else {
           console.error('Error fetching profile:', response.status)
         }
@@ -192,7 +169,7 @@ export default function MitraDashboard() {
   // Redirect pending mitra
   useEffect(() => {
     if (session?.user?.role === 'MITRA') {
-      const mitraStatus = (session.user as any).mitraStatus
+      const mitraStatus = (session.user as { mitraStatus?: string }).mitraStatus
       if (mitraStatus === 'PENDING') {
         router.push('/dashboard/mitra/pending')
       }
@@ -268,7 +245,6 @@ export default function MitraDashboard() {
       }
 
       const data = await response.json()
-      console.log('Save response:', data)
 
       // Store mitra ID for preview
       if (data.id) {
@@ -278,9 +254,9 @@ export default function MitraDashboard() {
       toast.success(
         'Profil berhasil disimpan! Klik "Lihat Preview" untuk melihat hasilnya.'
       )
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving profile:', error)
-      toast.error(error.message || 'Gagal menyimpan profil')
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan profil')
     } finally {
       setLoading(false)
     }
@@ -767,16 +743,8 @@ export default function MitraDashboard() {
               label="Galeri Foto Toko"
               value={profile.gallery}
               onChange={(urls) => {
-                console.log('=== Gallery onChange START ===')
-                console.log('Received URLs:', urls)
-                console.log('URLs length:', urls.length)
                 setProfile((prev) => {
-                  console.log('Previous profile.gallery:', prev.gallery)
-                  console.log('Previous gallery length:', prev.gallery.length)
                   const updated = { ...prev, gallery: urls }
-                  console.log('Updated profile.gallery:', updated.gallery)
-                  console.log('Updated gallery length:', updated.gallery.length)
-                  console.log('=== Gallery onChange END ===')
                   return updated
                 })
               }}

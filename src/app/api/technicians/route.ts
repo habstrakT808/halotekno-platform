@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause - only active technicians with active users
-    const where: any = {
+    const where: Record<string, unknown> = {
       isAvailable: true,
       user: {
         isActive: true,
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Determine sort order
-    let orderBy: any = { rating: 'desc' }
+    let orderBy: Record<string, 'asc' | 'desc'> = { rating: 'desc' }
     if (sortBy === 'experience') {
       orderBy = { experience: 'desc' }
     } else if (sortBy === 'reviews') {
@@ -77,8 +77,31 @@ export async function GET(req: NextRequest) {
       orderBy,
     })
 
+    // Calculate real ratings from reviews for each technician
+    const techniciansWithRealRatings = await Promise.all(
+      technicians.map(async (tech) => {
+        const reviews = await db.review.findMany({
+          where: {
+            order: {
+              technicianId: tech.id,
+            },
+            type: 'TECHNICIAN',
+          },
+        })
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
+        const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0
+
+        return {
+          ...tech,
+          rating: averageRating,
+          totalReview: reviews.length,
+        }
+      })
+    )
+
     return NextResponse.json({
-      technicians,
+      technicians: techniciansWithRealRatings,
       pagination: {
         page,
         limit,

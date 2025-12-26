@@ -36,9 +36,10 @@ export function LoginForm() {
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (err: any) {
-      if (err.errors) {
-        setError(err.errors[0]?.message || 'Data tidak valid')
+    } catch (err) {
+      if (err && typeof err === 'object' && 'errors' in err && Array.isArray((err as { errors?: Array<{ message?: string }> }).errors)) {
+        const errorObj = err as { errors: Array<{ message?: string }> }
+        setError(errorObj.errors[0]?.message || 'Data tidak valid')
       } else {
         setError('Terjadi kesalahan')
       }

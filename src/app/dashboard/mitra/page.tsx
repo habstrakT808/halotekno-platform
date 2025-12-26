@@ -9,10 +9,7 @@ import {
   Star,
   MessageSquare,
   Phone,
-  TrendingUp,
-  Users,
   Edit3,
-  Calendar,
   Clock,
   Award,
   Loader2,
@@ -143,14 +140,14 @@ export default function MitraDashboard() {
   // Redirect pending mitra
   useEffect(() => {
     if (session?.user?.role === 'MITRA') {
-      const mitraStatus = (session.user as any).mitraStatus
+      const mitraStatus = session.user.mitraStatus
       if (mitraStatus === 'PENDING') {
         router.push('/dashboard/mitra/pending')
       }
     }
   }, [session, router])
 
-  const calculateCompletion = (profile: any) => {
+  const calculateCompletion = (profile: Record<string, unknown>) => {
     let completed = 0
     const total = 10
     if (profile.businessName) completed++

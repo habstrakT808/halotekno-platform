@@ -18,7 +18,7 @@ export const metadata = {
 async function getData() {
   try {
     // Fetch top technicians (with user data and ratings)
-    const technicians = await prisma.technician.findMany({
+    const techniciansRaw = await prisma.technician.findMany({
       where: { isAvailable: true },
       include: {
         user: {
@@ -35,6 +35,29 @@ async function getData() {
       orderBy: { rating: 'desc' },
       take: 4,
     })
+
+    // Calculate real ratings from reviews for each technician
+    const technicians = await Promise.all(
+      techniciansRaw.map(async (tech) => {
+        const reviews = await prisma.review.findMany({
+          where: {
+            order: {
+              technicianId: tech.id,
+            },
+            type: 'TECHNICIAN',
+          },
+        })
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
+        const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0
+
+        return {
+          ...tech,
+          rating: averageRating,
+          totalReview: reviews.length,
+        }
+      })
+    )
 
     // Fetch top spareparts (active products only)
     const products = await prisma.product.findMany({
@@ -392,13 +415,12 @@ export default async function CustomerDashboard() {
                           Rp {product.price.toLocaleString('id-ID')}
                         </p>
                         <span
-                          className={`rounded px-2 py-1 text-xs ${
-                            product.stock > 5
+                          className={`rounded px-2 py-1 text-xs ${product.stock > 5
                               ? 'bg-green-100 text-green-700'
                               : product.stock > 0
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-red-100 text-red-700'
-                          }`}
+                            }`}
                         >
                           {product.stock > 0
                             ? `Stok ${product.stock}`
@@ -461,11 +483,10 @@ export default async function CustomerDashboard() {
                         </p>
                         <div className="flex gap-2">
                           <span
-                            className={`rounded px-2 py-1 text-xs ${
-                              item.stock > 0
+                            className={`rounded px-2 py-1 text-xs ${item.stock > 0
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-red-100 text-red-700'
-                            }`}
+                              }`}
                           >
                             {item.stock > 0 ? 'Tersedia' : 'Tidak Tersedia'}
                           </span>

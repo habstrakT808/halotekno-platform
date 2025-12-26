@@ -2,10 +2,9 @@
 
 import { useState, useEffect, use } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
-import ChatWindow from '@/components/chat/chat-window'
-import WhatsAppButton from '@/components/shared/whatsapp-button'
 import {
   Star,
   Award,
@@ -57,9 +56,26 @@ export default function TeknisiDetailPage({
   params: Promise<{ id: string }>
 }) {
   const resolvedParams = use(params)
+  const { data: session } = useSession()
   const [technician, setTechnician] = useState<TechnicianDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState<{
+    reviews: Array<{
+      id: string
+      rating: number
+      comment: string | null
+      createdAt: string
+      user: {
+        name: string
+        image: string | null
+      }
+    }>
+    averageRating: number
+    totalReviews: number
+  }>({ reviews: [], averageRating: 0, totalReviews: 0 })
   const [formData, setFormData] = useState({
+    service: '',
+    phoneType: '',
     date: '',
     time: '09:00',
     description: '',
@@ -70,10 +86,11 @@ export default function TeknisiDetailPage({
   const serviceParam = searchParams.get('service')
   const [activeService, setActiveService] = useState<
     'konsultasi' | 'cek-bongkar' | 'jasa-servis'
-  >((serviceParam as any) || 'konsultasi')
+  >((serviceParam as 'konsultasi' | 'cek-bongkar' | 'jasa-servis') || 'konsultasi')
 
   useEffect(() => {
     fetchTechnician()
+    fetchReviews()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedParams.id])
 
@@ -92,25 +109,71 @@ export default function TeknisiDetailPage({
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!technician) return
-    alert(
-      `Booking ${activeService} berhasil! ${technician.user.name} akan menghubungi Anda segera.`
-    )
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch(`/api/technicians/${resolvedParams.id}/reviews`)
+      if (res.ok) {
+        const data = await res.json()
+        setReviews(data)
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error)
+    }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!technician) return
 
-    if (diffDays === 0) return 'Hari ini'
-    if (diffDays === 1) return 'Kemarin'
-    if (diffDays < 7) return `${diffDays} hari yang lalu`
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} minggu yang lalu`
-    return `${Math.floor(diffDays / 30)} bulan yang lalu`
+    // Validation
+    if (!formData.service) {
+      alert('Pilih layanan terlebih dahulu')
+      return
+    }
+
+    if (!formData.phoneType.trim()) {
+      alert('Jenis HP/Gadget harus diisi')
+      return
+    }
+
+    if (!formData.description.trim()) {
+      alert('Deskripsi masalah harus diisi')
+      return
+    }
+
+    if (formData.scheduleType === 'scheduled' && !formData.date) {
+      alert('Pilih tanggal untuk jadwal booking')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: formData.service,
+          phoneType: formData.phoneType,
+          scheduleType: formData.scheduleType,
+          date: formData.date,
+          description: formData.description,
+        }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Gagal membuat booking')
+      }
+
+      const data = await res.json()
+      // Redirect to confirmation page
+      window.location.href = `/booking-confirmation/${data.order.id}`
+    } catch (error) {
+      console.error('Error creating booking:', error)
+      alert(error instanceof Error ? error.message : 'Terjadi kesalahan saat membuat booking')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (loading) {
@@ -162,11 +225,10 @@ export default function TeknisiDetailPage({
         <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-white p-2">
           <button
             onClick={() => setActiveService('konsultasi')}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${
-              activeService === 'konsultasi'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${activeService === 'konsultasi'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <MessageCircle className="h-4 w-4" />
             <span>Konsultasi</span>
@@ -174,11 +236,10 @@ export default function TeknisiDetailPage({
           <ChevronRight className="hidden h-5 w-5 self-center text-gray-300 sm:block" />
           <button
             onClick={() => setActiveService('cek-bongkar')}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${
-              activeService === 'cek-bongkar'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${activeService === 'cek-bongkar'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <Wrench className="h-4 w-4" />
             <span className="sm:hidden">Cek</span>
@@ -187,11 +248,10 @@ export default function TeknisiDetailPage({
           <ChevronRight className="hidden h-5 w-5 self-center text-gray-300 sm:block" />
           <button
             onClick={() => setActiveService('jasa-servis')}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${
-              activeService === 'jasa-servis'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4 ${activeService === 'jasa-servis'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             <Settings className="h-4 w-4" />
             <span className="sm:hidden">Servis</span>
@@ -221,11 +281,10 @@ export default function TeknisiDetailPage({
                       </h1>
                       <div className="mb-3 flex items-center gap-2">
                         <span
-                          className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                            technician.isAvailable
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
+                          className={`rounded-full px-3 py-1 text-sm font-semibold ${technician.isAvailable
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                            }`}
                         >
                           {technician.isAvailable
                             ? '🟢 Tersedia'
@@ -238,10 +297,10 @@ export default function TeknisiDetailPage({
                   <div className="mb-4 flex items-center gap-2">
                     <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
                     <span className="text-lg font-bold">
-                      {technician.rating.toFixed(1)}
+                      {reviews.averageRating > 0 ? reviews.averageRating.toFixed(1) : '0.0'}
                     </span>
                     <span className="text-gray-600">
-                      ({technician.totalReview} review)
+                      ({reviews.totalReviews} review{reviews.totalReviews !== 1 ? 's' : ''})
                     </span>
                   </div>
 
@@ -334,13 +393,13 @@ export default function TeknisiDetailPage({
             )}
 
             {/* Reviews */}
-            {technician.reviews.length > 0 && (
+            {reviews.reviews.length > 0 && (
               <div className="rounded-2xl border border-gray-200 bg-white p-6">
                 <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Review ({technician.totalReview})
+                  Review ({reviews.totalReviews})
                 </h2>
                 <div className="space-y-4">
-                  {technician.reviews.map((review) => (
+                  {reviews.reviews.map((review) => (
                     <div
                       key={review.id}
                       className="border-b border-gray-200 pb-4 last:border-0 last:pb-0"
@@ -365,18 +424,21 @@ export default function TeknisiDetailPage({
                           </span>
                         </div>
                         <span className="text-sm text-gray-500">
-                          {formatDate(review.createdAt)}
+                          {new Date(review.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
                         </span>
                       </div>
                       <div className="mb-2 flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
-                              i < review.rating
-                                ? 'fill-yellow-500 text-yellow-500'
-                                : 'text-gray-300'
-                            }`}
+                            className={`h-4 w-4 ${i < review.rating
+                              ? 'fill-yellow-500 text-yellow-500'
+                              : 'text-gray-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -398,20 +460,41 @@ export default function TeknisiDetailPage({
                   <div className="mb-4 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-blue-600" />
                     <h3 className="text-lg font-bold text-gray-900">
-                      Chat dengan {technician.user.name}
+                      Konsultasi Gratis
                     </h3>
                   </div>
-                  <ChatWindow />
-                  {technician.user.phone && (
-                    <div className="mt-4">
-                      <WhatsAppButton
-                        phoneNumber={technician.user.phone}
-                        className="w-full justify-center text-sm"
-                        message={`Halo ${technician.user.name}! 👋
-Saya ingin konsultasi mengenai masalah gadget saya.
-
-Mohon bantuannya, terima kasih!`}
-                      />
+                  <p className="mb-4 text-sm text-gray-600">
+                    Chat langsung dengan {technician.user.name} untuk konsultasi masalah gadget Anda
+                  </p>
+                  {/* Only show button for customers */}
+                  {session?.user?.role === 'CUSTOMER' && !session.user.isTechnician ? (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/chat/rooms', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ technicianId: technician.id }),
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            window.location.href = `/chat/${data.room.id}`
+                          } else if (res.status === 401) {
+                            window.location.href = '/login'
+                          }
+                        } catch (error) {
+                          console.error('Error creating chat:', error)
+                        }
+                      }}
+                      className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-700"
+                    >
+                      Mulai Konsultasi
+                    </button>
+                  ) : (
+                    <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 text-center">
+                      <p className="text-sm text-gray-600">
+                        {!session ? 'Login sebagai customer untuk memulai konsultasi' : 'Hanya customer yang dapat melakukan booking'}
+                      </p>
                     </div>
                   )}
                 </>
@@ -419,103 +502,158 @@ Mohon bantuannya, terima kasih!`}
 
               {(activeService === 'cek-bongkar' ||
                 activeService === 'jasa-servis') && (
-                <>
-                  <div className="mb-4 flex items-center gap-2">
-                    {activeService === 'cek-bongkar' ? (
-                      <Wrench className="h-5 w-5 text-orange-600" />
+                  <>
+                    <div className="mb-4 flex items-center gap-2">
+                      {activeService === 'cek-bongkar' ? (
+                        <Wrench className="h-5 w-5 text-orange-600" />
+                      ) : (
+                        <Settings className="h-5 w-5 text-blue-600" />
+                      )}
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {activeService === 'cek-bongkar'
+                          ? 'Booking Cek/Bongkar'
+                          : 'Booking Servis'}
+                      </h3>
+                    </div>
+                    {/* Only show form for customers */}
+                    {session?.user?.role === 'CUSTOMER' && !session.user.isTechnician ? (
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Pilih Layanan
+                          </label>
+                          <select
+                            value={formData.service}
+                            onChange={(e) =>
+                              setFormData({ ...formData, service: e.target.value })
+                            }
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            required
+                          >
+                            <option value="">-- Pilih Layanan --</option>
+                            {technician.services
+                              .filter((service) => {
+                                // Filter based on active tab
+                                if (activeService === 'konsultasi') {
+                                  return service.category === 'KONSULTASI'
+                                } else if (activeService === 'cek-bongkar') {
+                                  return service.category === 'CEK_BONGKAR'
+                                } else if (activeService === 'jasa-servis') {
+                                  return service.category === 'SERVIS_LENGKAP'
+                                }
+                                return true
+                              })
+                              .map((service) => (
+                                <option key={service.id} value={service.id}>
+                                  {service.name} - Rp {service.price.toLocaleString('id-ID')}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Jenis HP/Gadget
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.phoneType}
+                            onChange={(e) =>
+                              setFormData({ ...formData, phoneType: e.target.value })
+                            }
+                            placeholder="Contoh: iPhone 13 Pro, Samsung Galaxy S21"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Jadwal
+                          </label>
+                          <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="scheduleType"
+                                value="asap"
+                                checked={formData.scheduleType === 'asap'}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    scheduleType: e.target.value,
+                                  })
+                                }
+                                className="text-blue-600"
+                              />
+                              <span className="text-sm">Segera</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="scheduleType"
+                                value="scheduled"
+                                checked={formData.scheduleType === 'scheduled'}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    scheduleType: e.target.value,
+                                  })
+                                }
+                                className="text-blue-600"
+                              />
+                              <span className="text-sm">Pilih Tanggal</span>
+                            </label>
+                          </div>
+                        </div>
+                        {formData.scheduleType === 'scheduled' && (
+                          <div>
+                            <input
+                              type="date"
+                              value={formData.date}
+                              onChange={(e) =>
+                                setFormData({ ...formData, date: e.target.value })
+                              }
+                              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Deskripsi Masalah
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={formData.description}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Jelaskan masalah gadget Anda..."
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-semibold text-white transition-all hover:shadow-lg"
+                        >
+                          Booking Sekarang
+                        </button>
+                      </form>
                     ) : (
-                      <Settings className="h-5 w-5 text-blue-600" />
-                    )}
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {activeService === 'cek-bongkar'
-                        ? 'Booking Cek/Bongkar'
-                        : 'Booking Servis'}
-                    </h3>
-                  </div>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Jadwal
-                      </label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="scheduleType"
-                            value="asap"
-                            checked={formData.scheduleType === 'asap'}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                scheduleType: e.target.value,
-                              })
-                            }
-                            className="text-blue-600"
-                          />
-                          <span className="text-sm">Segera</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="scheduleType"
-                            value="scheduled"
-                            checked={formData.scheduleType === 'scheduled'}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                scheduleType: e.target.value,
-                              })
-                            }
-                            className="text-blue-600"
-                          />
-                          <span className="text-sm">Pilih Tanggal</span>
-                        </label>
-                      </div>
-                    </div>
-                    {formData.scheduleType === 'scheduled' && (
-                      <div>
-                        <input
-                          type="date"
-                          value={formData.date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, date: e.target.value })
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                        />
+                      <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 text-center">
+                        <p className="text-sm text-gray-600">
+                          {!session ? 'Login sebagai customer untuk melakukan booking' : 'Hanya customer yang dapat melakukan booking'}
+                        </p>
                       </div>
                     )}
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Deskripsi Masalah
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Jelaskan masalah gadget Anda..."
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 py-3 font-semibold text-white transition-all hover:shadow-lg"
-                    >
-                      Booking Sekarang
-                    </button>
-                  </form>
-                </>
-              )}
+                  </>
+                )}
             </div>
           </div>
         </div>
       </main>
 
-      <WhatsAppButton variant="fixed" />
       <Footer variant="light" />
     </div>
   )

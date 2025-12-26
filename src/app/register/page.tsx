@@ -76,8 +76,8 @@ export default function RegisterPage() {
         }
         router.refresh()
       }
-    } catch (error: any) {
-      setError(error.message || 'Terjadi kesalahan. Silakan coba lagi.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Terjadi kesalahan. Silakan coba lagi.')
     } finally {
       setIsLoading(false)
     }

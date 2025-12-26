@@ -1,6 +1,4 @@
-import { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 interface ProductCardProps {
   id: string
@@ -18,7 +16,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  id,
   title,
   image,
   price,
@@ -29,7 +26,6 @@ export function ProductCard({
   description,
   href,
   actionLabel = 'Lihat Detail',
-  onAction,
 }: ProductCardProps) {
   const badgeColors = {
     green: 'bg-green-100 text-green-700',

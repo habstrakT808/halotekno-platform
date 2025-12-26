@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, Clock, User } from 'lucide-react'
+import { Calendar, Clock } from 'lucide-react'
 import type { Article } from '@/lib/articles'
 
 interface ArticleCardProps {

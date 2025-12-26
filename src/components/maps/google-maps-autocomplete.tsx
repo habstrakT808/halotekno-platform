@@ -1,10 +1,8 @@
 'use client'
 
-import { useLoadScript, Autocomplete } from '@react-google-maps/api'
+import { Autocomplete } from '@react-google-maps/api'
 import { useState, useRef } from 'react'
-import { MapPin, Loader2 } from 'lucide-react'
-
-const libraries: 'places'[] = ['places']
+import { MapPin } from 'lucide-react'
 
 interface GoogleMapsAutocompleteProps {
   onPlaceSelected: (place: {
@@ -23,11 +21,6 @@ export default function GoogleMapsAutocomplete({
   defaultValue = '',
   placeholder = 'Cari alamat...',
 }: GoogleMapsAutocompleteProps) {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-  })
-
   const [autocomplete, setAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -76,25 +69,6 @@ export default function GoogleMapsAutocomplete({
         longitude,
       })
     }
-  }
-
-  if (loadError) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p className="text-sm text-red-600">
-          Error loading Google Maps. Please check your API key.
-        </p>
-      </div>
-    )
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-        <span className="text-sm text-gray-500">Loading maps...</span>
-      </div>
-    )
   }
 
   return (

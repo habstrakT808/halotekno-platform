@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (search) {
       where.user = {
@@ -76,8 +76,31 @@ export async function GET(req: NextRequest) {
       },
     })
 
+    // Calculate real ratings from reviews for each technician
+    const techniciansWithRealRatings = await Promise.all(
+      technicians.map(async (tech) => {
+        const reviews = await db.review.findMany({
+          where: {
+            order: {
+              technicianId: tech.id,
+            },
+            type: 'TECHNICIAN',
+          },
+        })
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
+        const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0
+
+        return {
+          ...tech,
+          rating: averageRating,
+          totalReview: reviews.length,
+        }
+      })
+    )
+
     return NextResponse.json({
-      technicians,
+      technicians: techniciansWithRealRatings,
       pagination: {
         page,
         limit,

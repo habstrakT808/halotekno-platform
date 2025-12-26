@@ -46,7 +46,11 @@ export default function EditUserModal({ isOpen, user, onClose, onSuccess }: Edit
         setLoading(true)
 
         try {
-            const updateData: any = {
+            const updateData: {
+                role: string
+                isActive: boolean
+                mitraStatus?: string
+            } = {
                 role: formData.role,
                 isActive: formData.isActive,
             }
@@ -69,8 +73,8 @@ export default function EditUserModal({ isOpen, user, onClose, onSuccess }: Edit
             toast.success('User updated successfully!')
             onSuccess()
             onClose()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to update user')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to update user')
         } finally {
             setLoading(false)
         }

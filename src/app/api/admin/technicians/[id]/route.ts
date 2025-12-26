@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 // GET /api/admin/technicians/[id] - Get technician detail
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession()
@@ -14,8 +14,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const resolvedParams = await params
     const technician = await db.technician.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         user: {
           select: {
@@ -60,7 +61,7 @@ export async function GET(
 // PUT /api/admin/technicians/[id] - Update technician
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession()
@@ -69,12 +70,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const resolvedParams = await params
     const body = await req.json()
     const { bio, experience, specialties, isAvailable } = body
 
     // Check if technician exists
     const existing = await db.technician.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
     })
 
     if (!existing) {
@@ -86,7 +88,7 @@ export async function PUT(
 
     // Update technician
     const technician = await db.technician.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         bio: bio !== undefined ? bio : undefined,
         experience: experience !== undefined ? experience : undefined,
@@ -119,7 +121,7 @@ export async function PUT(
 // DELETE /api/admin/technicians/[id] - Delete technician
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession()
@@ -128,9 +130,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const resolvedParams = await params
     // Check if technician exists
     const existing = await db.technician.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
     })
 
     if (!existing) {

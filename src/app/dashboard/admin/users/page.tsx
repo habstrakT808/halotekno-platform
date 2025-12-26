@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Users,
@@ -11,13 +11,10 @@ import {
     X,
     Edit2,
     Trash2,
-    Filter,
     Loader2,
     UserCheck,
-    UserX,
     Shield,
     Store,
-    User as UserIcon,
 } from 'lucide-react'
 import CreateUserModal from '@/components/admin/create-user-modal'
 import EditUserModal from '@/components/admin/edit-user-modal'
@@ -33,6 +30,7 @@ interface User {
     mitraStatus: string | null
     createdAt: string
     updatedAt: string
+    technician?: { id: string } | null
 }
 
 interface Stats {
@@ -60,7 +58,7 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null)
 
     // Fetch users
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true)
         try {
             const params = new URLSearchParams({
@@ -99,11 +97,11 @@ export default function UsersPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, roleFilter, mitraStatusFilter, searchQuery, router])
 
     useEffect(() => {
         fetchUsers()
-    }, [page, roleFilter, mitraStatusFilter, searchQuery])
+    }, [fetchUsers])
 
     // Selection handlers
     const toggleSelectAll = () => {
@@ -208,9 +206,16 @@ export default function UsersPage() {
                 return 'bg-blue-100 text-blue-700'
             case 'MITRA':
                 return 'bg-green-100 text-green-700'
+            case 'TECHNICIAN':
+                return 'bg-orange-100 text-orange-700'
             default:
                 return 'bg-gray-100 text-gray-700'
         }
+    }
+
+    const getRoleLabel = (user: User) => {
+        if (user.technician) return 'TEKNISI'
+        return user.role
     }
 
     const getMitraStatusBadge = (status: string | null) => {
@@ -298,8 +303,9 @@ export default function UsersPage() {
                     >
                         <option value="ALL">All Roles</option>
                         <option value="CUSTOMER">Customer</option>
-                        <option value="ADMIN">Teknisi</option>
+                        <option value="TECHNICIAN">Teknisi</option>
                         <option value="MITRA">Mitra</option>
+                        <option value="ADMIN">Admin</option>
                         <option value="SUPER_ADMIN">Super Admin</option>
                     </select>
 
@@ -443,8 +449,8 @@ export default function UsersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(user.role)}`}>
-                                                {user.role}
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(user.technician ? 'TECHNICIAN' : user.role)}`}>
+                                                {getRoleLabel(user)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">

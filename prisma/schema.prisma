@@ -38,6 +38,10 @@ model User {
   password      String?
   role          UserRole     @default(CUSTOMER)
   phone         String?
+  address       String?      // Street address
+  city          String?      // City/Regency
+  province      String?      // Province
+  postalCode    String?      // Postal code
   isActive      Boolean      @default(true)
   mitraStatus   MitraStatus? // Only for MITRA role, null for others
   createdAt     DateTime     @default(now())
@@ -51,8 +55,8 @@ model User {
   carts         Cart[]
   orders        Order[]
   reviews       Review[]
-  chats         Chat[]
-  messages      Message[]
+  chatRooms     ChatRoom[]    @relation("CustomerChats")
+  sentMessages  ChatMessage[] @relation("SentMessages")
   notifications Notification[]
   tickets       Ticket[]
 
@@ -121,9 +125,10 @@ model Technician {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  services Service[]
-  orders   Order[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services  Service[]
+  orders    Order[]
+  chatRooms ChatRoom[]
 
   @@index([userId])
   @@index([rating])
@@ -146,8 +151,10 @@ model Service {
   name         String
   description  String?
   category     ServiceCategory
-  price        Float
-  duration     Int? // in minutes
+  price        Float           // Base/average price (for backward compatibility)
+  minPrice     Float?          // Minimum price for range
+  maxPrice     Float?          // Maximum price for range
+  duration     Int?            // in minutes
   isActive     Boolean         @default(true)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -577,42 +584,6 @@ model Review {
   @@map("reviews")
 }
 
-// ============================================
-// CHAT & MESSAGES
-// ============================================
-
-model Chat {
-  id        String   @id @default(cuid())
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user     User      @relation(fields: [userId], references: [id])
-  messages Message[]
-
-  @@index([userId])
-  @@map("chats")
-}
-
-model Message {
-  id         String   @id @default(cuid())
-  chatId     String
-  senderId   String
-  content    String
-  fileUrl    String?
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id])
-
-  @@index([chatId])
-  @@index([senderId])
-  @@map("messages")
-}
 
 // ============================================
 // NOTIFICATIONS
@@ -667,4 +638,50 @@ model Article {
   @@index([slug])
   @@index([isPublished])
   @@map("articles")
+}
+
+// ============================================
+// CHAT SYSTEM
+// ============================================
+
+model ChatRoom {
+  id            String   @id @default(cuid())
+  customerId    String
+  technicianId  String
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  customer   User         @relation("CustomerChats", fields: [customerId], references: [id], onDelete: Cascade)
+  technician Technician   @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+
+  @@unique([customerId, technicianId])
+  @@index([customerId])
+  @@index([technicianId])
+  @@index([lastMessageAt])
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  senderId  String
+  content   String
+  mediaUrl  String?  // Base64 data or external URL
+  mediaType String?  // MIME type (image/jpeg, video/mp4, application/pdf, etc)
+  mediaSize Int?     // File size in bytes
+  mediaName String?  // Original filename
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("chat_messages")
 }

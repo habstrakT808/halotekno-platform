@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('Received profile data:', JSON.stringify(body, null, 2))
 
     // Validate required fields
     if (!body.businessName || !body.address || !body.city || !body.phone) {
@@ -172,7 +171,7 @@ export async function POST(request: NextRequest) {
     // Create services if provided
     if (body.services && Array.isArray(body.services)) {
       await prisma.mitraService.createMany({
-        data: body.services.map((service: any) => ({
+        data: body.services.map((service: { name: string; description?: string; icon?: string; price?: number }) => ({
           mitraId: mitra.id,
           name: service.name,
           description: service.description || null,
@@ -185,7 +184,7 @@ export async function POST(request: NextRequest) {
     // Create images if provided
     if (body.images && Array.isArray(body.images)) {
       await prisma.mitraImage.createMany({
-        data: body.images.map((image: any) => ({
+        data: body.images.map((image: { url?: string } | string) => ({
           mitraId: mitra.id,
           url: image.url || image,
           isBanner: false,
@@ -207,12 +206,15 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(updatedMitra)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error saving mitra profile:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorCode = (error as { code?: string }).code
+    const errorMeta = (error as { meta?: unknown }).meta
     console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
+      message: errorMessage,
+      code: errorCode,
+      meta: errorMeta,
     })
     return NextResponse.json(
       { error: error.message || 'Internal server error' },

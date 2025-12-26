@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (category !== 'ALL') {
       where.category = category
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         total: totalProducts,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
-        byCategory: categoryStats.reduce((acc: any, stat) => {
+        byCategory: categoryStats.reduce((acc: Record<string, number>, stat) => {
           acc[stat.category] = stat._count
           return acc
         }, {}),

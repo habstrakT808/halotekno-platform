@@ -1,47 +1,62 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Users,
   ShoppingCart,
-  DollarSign,
   Wrench,
   Package,
   FileText,
   Settings,
   TrendingUp,
   Clock,
-  ArrowUpRight,
+  UserCheck,
 } from 'lucide-react'
 import Link from 'next/link'
 
-export const metadata = {
-  title: 'Admin Dashboard - HaloTekno',
+interface DashboardStats {
+  totalUsers: number
+  totalTechnicians: number
+  totalMitras: number
+  totalProducts: number
+  totalOrders: number
+  pendingMitras: number
+  byRole: Record<string, number>
 }
 
-// Stat Card Component for Light Mode
+interface RecentUser {
+  id: string
+  name: string | null
+  email: string
+  role: string
+  createdAt: string
+  technician?: { id: string } | null
+}
+
+// Stat Card Component
 function StatCard({
   icon: Icon,
   label,
   value,
-  trend,
   iconBg = 'bg-blue-500',
+  loading = false,
 }: {
   icon: React.ElementType
   label: string
-  value: string
-  trend?: { value: number; isPositive: boolean }
+  value: string | number
   iconBg?: string
+  loading?: boolean
 }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">{label}</p>
-          <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
-          {trend && (
-            <p
-              className={`mt-1 text-sm ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}
-            >
-              {trend.isPositive ? '↑' : '↓'} {trend.value}%
-            </p>
+          {loading ? (
+            <div className="mt-1 h-9 w-20 animate-pulse rounded bg-gray-200" />
+          ) : (
+            <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
           )}
         </div>
         <div className={`rounded-xl ${iconBg} p-3`}>
@@ -50,6 +65,27 @@ function StatCard({
       </div>
     </div>
   )
+}
+
+// Helper functions for role display
+function getRoleLabel(user: RecentUser) {
+  if (user.technician) return 'TEKNISI'
+  return user.role
+}
+
+function getRoleBadgeColor(user: RecentUser) {
+  if (user.technician) return 'bg-orange-100 text-orange-700'
+
+  switch (user.role) {
+    case 'SUPER_ADMIN':
+      return 'bg-purple-100 text-purple-700'
+    case 'ADMIN':
+      return 'bg-blue-100 text-blue-700'
+    case 'MITRA':
+      return 'bg-green-100 text-green-700'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
 }
 
 // Quick Action Card
@@ -85,6 +121,37 @@ function QuickActionCard({
 }
 
 export default function AdminDashboard() {
+  const router = useRouter()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchDashboardData = async () => {
+    try {
+      const res = await fetch('/api/admin/dashboard')
+
+      if (res.status === 401) {
+        router.push('/login')
+        return
+      }
+
+      if (!res.ok) throw new Error('Failed to fetch dashboard data')
+
+      const data = await res.json()
+      setStats(data.stats)
+      setRecentUsers(data.recentUsers || [])
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div>
       {/* Header Banner */}
@@ -115,30 +182,30 @@ export default function AdminDashboard() {
         <StatCard
           icon={Users}
           label="Total Users"
-          value="1,234"
-          trend={{ value: 12, isPositive: true }}
+          value={stats?.totalUsers || 0}
           iconBg="bg-blue-500"
-        />
-        <StatCard
-          icon={ShoppingCart}
-          label="Total Orders"
-          value="456"
-          trend={{ value: 8, isPositive: true }}
-          iconBg="bg-green-500"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="Revenue (Bulan Ini)"
-          value="Rp 45.2M"
-          trend={{ value: 15, isPositive: true }}
-          iconBg="bg-yellow-500"
+          loading={loading}
         />
         <StatCard
           icon={Wrench}
-          label="Mitra Aktif"
-          value="89"
-          trend={{ value: 5, isPositive: true }}
-          iconBg="bg-purple-500"
+          label="Total Teknisi"
+          value={stats?.totalTechnicians || 0}
+          iconBg="bg-orange-500"
+          loading={loading}
+        />
+        <StatCard
+          icon={Package}
+          label="Total Produk"
+          value={stats?.totalProducts || 0}
+          iconBg="bg-green-500"
+          loading={loading}
+        />
+        <StatCard
+          icon={UserCheck}
+          label="Pending Mitra"
+          value={stats?.pendingMitras || 0}
+          iconBg="bg-yellow-500"
+          loading={loading}
         />
       </div>
 
@@ -206,6 +273,34 @@ export default function AdminDashboard() {
           />
         </div>
       </div>
+
+      {/* Recent Users */}
+      {!loading && recentUsers.length > 0 && (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-gray-900">User Terbaru</h2>
+          <div className="space-y-3">
+            {recentUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{user.name || 'N/A'}</p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`rounded-full px-2 py-1 text-xs font-medium ${getRoleBadgeColor(user)}`}>
+                    {getRoleLabel(user)}
+                  </span>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {new Date(user.createdAt).toLocaleDateString('id-ID')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

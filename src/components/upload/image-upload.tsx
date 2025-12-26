@@ -18,7 +18,6 @@ export default function ImageUpload({
   onChange,
   onRemove,
   label = 'Upload Image',
-  aspectRatio = '16:9',
   folder = 'halotekno',
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
@@ -31,7 +30,7 @@ export default function ImageUpload({
     }
   }, [])
 
-  const handleUploadSuccess = (result: any) => {
+  const handleUploadSuccess = (result: { info: { secure_url: string } }) => {
     onChange(result.info.secure_url)
     setIsUploading(false)
     // Restore scroll immediately after upload

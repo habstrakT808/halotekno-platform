@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
@@ -41,7 +41,7 @@ export default function SparepartPage() {
   const [brandOptions, setBrandOptions] = useState<FilterOption[]>([])
 
   // Fetch products from API
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -91,22 +91,22 @@ export default function SparepartPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, searchQuery, categoryFilter, brandFilter, priceRange])
 
   useEffect(() => {
     fetchProducts()
-  }, [page, searchQuery, categoryFilter, brandFilter, priceRange])
+  }, [fetchProducts])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setPage(1)
   }
 
-  const handleSort = (value: string) => {
+  const handleSort = () => {
     // TODO: Implement sorting
   }
 
-  const handleFilterChange = (filters: Record<string, string[]>) => {
+  const handleFilterChange = () => {
     // Update filters based on FilterSidebar callback
     const kategori = filters['Kategori']?.[0] || ''
     const brand = filters['Brand']?.[0] || ''

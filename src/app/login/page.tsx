@@ -36,7 +36,10 @@ export default function LoginPage() {
         const userRes = await fetch('/api/auth/me')
         if (userRes.ok) {
           const userData = await userRes.json()
-          if (userData.role === 'ADMIN' || userData.role === 'SUPER_ADMIN') {
+          // Check technician first (priority over role)
+          if (userData.isTechnician) {
+            router.push('/dashboard/teknisi')
+          } else if (userData.role === 'ADMIN' || userData.role === 'SUPER_ADMIN') {
             router.push('/dashboard/admin')
           } else if (userData.role === 'MITRA') {
             router.push('/dashboard/mitra')
@@ -49,6 +52,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (error) {
+      console.error('Login error:', error)
       setError('Terjadi kesalahan. Silakan coba lagi.')
     } finally {
       setIsLoading(false)

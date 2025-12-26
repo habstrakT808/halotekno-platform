@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
@@ -30,7 +30,7 @@ export default function SewaAlatPage() {
   const [stats, setStats] = useState({ total: 0, available: 0, unavailable: 0 })
 
   // Fetch rental items from API
-  const fetchRentalItems = async () => {
+  const fetchRentalItems = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -54,18 +54,18 @@ export default function SewaAlatPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, searchQuery, availability])
 
   useEffect(() => {
     fetchRentalItems()
-  }, [page, searchQuery, availability])
+  }, [fetchRentalItems])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setPage(1)
   }
 
-  const handleSort = (value: string) => {
+  const handleSort = () => {
     // TODO: Implement sorting
   }
 

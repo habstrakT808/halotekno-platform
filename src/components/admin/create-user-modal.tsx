@@ -40,8 +40,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
             setFormData({ name: '', email: '', password: '', phone: '', role: 'CUSTOMER' })
             onSuccess()
             onClose()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to create user')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to create user')
         } finally {
             setLoading(false)
         }

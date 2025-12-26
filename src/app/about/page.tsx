@@ -1,6 +1,5 @@
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
-import AboutHero from '@/components/about/about-hero'
 import CompanyProfile from '@/components/about/company-profile'
 import VisionMission from '@/components/about/vision-mission'
 import CompanyHistory from '@/components/about/company-history'

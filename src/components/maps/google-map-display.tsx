@@ -20,7 +20,6 @@ const mapContainerStyle = {
 export default function GoogleMapDisplay({
   latitude,
   longitude,
-  address,
   businessName,
 }: GoogleMapDisplayProps) {
   const { isLoaded, loadError } = useLoadScript({

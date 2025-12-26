@@ -50,7 +50,7 @@ export default function ReviewForm({ mitraId, onSuccess }: ReviewFormProps) {
       if (onSuccess) {
         onSuccess()
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting review:', error)
       toast.error(error.message || 'Gagal mengirim review')
     } finally {

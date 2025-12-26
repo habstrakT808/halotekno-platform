@@ -1,11 +1,12 @@
 {
   "name": "halotekno",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --max-http-header-size=32768 node_modules/next/dist/bin/next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node --max-http-header-size=32768 node_modules/next/dist/bin/next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -47,6 +48,7 @@
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.54.2",
     "redis": "^4.7.0",
+    "sharp": "^0.34.5",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",

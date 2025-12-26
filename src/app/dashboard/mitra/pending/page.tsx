@@ -13,7 +13,7 @@ export default function MitraPendingPage() {
         if (status === 'unauthenticated') {
             router.push('/login')
         }
-        if (session?.user?.role === 'MITRA' && (session.user as any).mitraStatus === 'APPROVED') {
+        if (session?.user?.role === 'MITRA' && session.user.mitraStatus === 'APPROVED') {
             router.push('/dashboard/customer')
         }
     }, [session, status, router])

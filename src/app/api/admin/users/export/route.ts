@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const mitraStatus = searchParams.get('mitraStatus') || 'ALL'
 
         // Build where clause
-        const where: any = {}
+        const where: Record<string, unknown> = {}
 
         if (role !== 'ALL') {
             where.role = role

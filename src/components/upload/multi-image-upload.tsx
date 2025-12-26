@@ -26,7 +26,6 @@ export default function MultiImageUpload({
 
   // Sync ref with prop value when it changes from parent
   useEffect(() => {
-    console.log('MultiImageUpload: value prop changed to:', value)
     imagesRef.current = value || []
   }, [value])
 
@@ -37,16 +36,12 @@ export default function MultiImageUpload({
     }
   }, [])
 
-  const handleUploadSuccess = (result: any) => {
+  const handleUploadSuccess = (result: { info: { secure_url: string } }) => {
     const newUrl = result.info.secure_url
-    console.log('Upload success, adding:', newUrl)
-    console.log('Current imagesRef:', imagesRef.current)
 
     // Add to ref
     const updatedImages = [...imagesRef.current, newUrl]
     imagesRef.current = updatedImages
-
-    console.log('Updated imagesRef:', imagesRef.current)
 
     // Call parent onChange
     onChange(updatedImages)
@@ -65,13 +60,8 @@ export default function MultiImageUpload({
   }
 
   const handleRemove = (urlToRemove: string) => {
-    console.log('Removing:', urlToRemove)
-    console.log('Current imagesRef:', imagesRef.current)
-
     const filtered = imagesRef.current.filter((url) => url !== urlToRemove)
     imagesRef.current = filtered
-
-    console.log('Updated imagesRef after remove:', imagesRef.current)
     onChange(filtered)
   }
 

@@ -39,6 +39,7 @@ export default function ReviewList({
 
   useEffect(() => {
     fetchReviews()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mitraId, refreshTrigger])
 
   const fetchReviews = async () => {
@@ -54,7 +55,7 @@ export default function ReviewList({
       }
 
       setReviews(data.reviews)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching reviews:', error)
       setError(error.message)
     } finally {

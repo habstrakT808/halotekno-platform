@@ -6,7 +6,15 @@ import { toast } from 'sonner'
 
 interface RentalItemFormModalProps {
   isOpen: boolean
-  rentalItem: any | null
+  rentalItem: {
+    id?: string
+    name?: string
+    description?: string
+    price?: number
+    stock?: number
+    category?: string
+    images?: string[]
+  } | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -122,8 +130,8 @@ export default function RentalItemFormModal({
       )
       onSuccess()
       onClose()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save rental item')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save rental item')
     } finally {
       setLoading(false)
     }

@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Package,
   Search,
   Plus,
-  Download,
   Edit2,
   Trash2,
   Loader2,
@@ -98,7 +97,7 @@ export default function ProductsPage() {
   const [editingRental, setEditingRental] = useState<RentalItem | null>(null)
 
   // Fetch products
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setProductsLoading(true)
     try {
       const params = new URLSearchParams({
@@ -132,10 +131,10 @@ export default function ProductsPage() {
     } finally {
       setProductsLoading(false)
     }
-  }
+  }, [page, searchQuery, categoryFilter, stockStatusFilter, router])
 
   // Fetch rental items
-  const fetchRentalItems = async () => {
+  const fetchRentalItems = useCallback(async () => {
     setRentalsLoading(true)
     try {
       const params = new URLSearchParams({
@@ -166,7 +165,7 @@ export default function ProductsPage() {
     } finally {
       setRentalsLoading(false)
     }
-  }
+  }, [page, searchQuery, stockStatusFilter, router])
 
   useEffect(() => {
     if (activeTab === 'sparepart') {
@@ -174,7 +173,7 @@ export default function ProductsPage() {
     } else {
       fetchRentalItems()
     }
-  }, [page, searchQuery, categoryFilter, stockStatusFilter, activeTab])
+  }, [page, searchQuery, categoryFilter, stockStatusFilter, activeTab, fetchProducts, fetchRentalItems])
 
   // Delete product
   const handleDeleteProduct = async (id: string) => {

@@ -6,16 +6,10 @@ import { registerSchema } from '@/lib/validations/auth'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    console.log('Registration request body:', {
-      ...body,
-      password: '[REDACTED]',
-      confirmPassword: '[REDACTED]',
-    })
 
     const validatedFields = registerSchema.safeParse(body)
 
     if (!validatedFields.success) {
-      console.log('Validation failed:', validatedFields.error.flatten())
       return NextResponse.json(
         { error: 'Data tidak valid', details: validatedFields.error.flatten() },
         { status: 400 }
@@ -58,21 +52,19 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    console.log('User created successfully:', user.email)
-
     return NextResponse.json(
       { message: 'Registrasi berhasil', user },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error)
     console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      code: (error as { code?: string }).code,
+      meta: (error as { meta?: unknown }).meta,
     })
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server', details: error.message },
+      { error: 'Terjadi kesalahan server', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

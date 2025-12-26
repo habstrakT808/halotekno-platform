@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/../auth'
 import prisma from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 export async function GET(request: NextRequest) {
     try {
@@ -21,10 +22,20 @@ export async function GET(request: NextRequest) {
         const skip = (page - 1) * limit
 
         // Build where clause
-        const where: any = {}
+        const where: {
+            role?: string
+            mitraStatus?: string
+            technician?: { isNot: null }
+            OR?: Array<{ name?: { contains: string; mode: string }; email?: { contains: string; mode: string } }>
+        } = {}
 
         if (role !== 'ALL') {
-            where.role = role
+            if (role === 'TECHNICIAN') {
+                // Filter users who have technician profile
+                where.technician = { isNot: null }
+            } else {
+                where.role = role
+            }
         }
 
         if (mitraStatus !== 'ALL' && role === 'MITRA') {
@@ -52,6 +63,9 @@ export async function GET(request: NextRequest) {
                     mitraStatus: true,
                     createdAt: true,
                     updatedAt: true,
+                    technician: {
+                        select: { id: true },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
@@ -79,7 +93,7 @@ export async function GET(request: NextRequest) {
                 totalPages: Math.ceil(total / limit),
             },
             stats: {
-                byRole: stats.reduce((acc: any, stat) => {
+                byRole: stats.reduce((acc: Record<string, number>, stat) => {
                     acc[stat.role] = stat._count
                     return acc
                 }, {}),
@@ -119,7 +133,6 @@ export async function POST(request: NextRequest) {
         }
 
         // Hash password
-        const bcrypt = require('bcryptjs')
         const hashedPassword = await bcrypt.hash(password, 12)
 
         // Create user

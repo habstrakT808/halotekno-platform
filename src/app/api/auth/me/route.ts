@@ -18,6 +18,9 @@ export async function GET() {
                 email: true,
                 role: true,
                 image: true,
+                technician: {
+                    select: { id: true },
+                },
             },
         })
 
@@ -25,7 +28,11 @@ export async function GET() {
             return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
-        return NextResponse.json(user)
+        // Return user with isTechnician flag
+        return NextResponse.json({
+            ...user,
+            isTechnician: !!user.technician,
+        })
     } catch (error) {
         console.error('Error fetching user:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

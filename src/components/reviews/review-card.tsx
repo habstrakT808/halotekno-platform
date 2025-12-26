@@ -57,7 +57,7 @@ export default function ReviewCard({
       if (onDelete) {
         onDelete()
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting review:', error)
       toast.error(error.message || 'Gagal menghapus review')
     } finally {

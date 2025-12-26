@@ -117,7 +117,7 @@ export async function PUT(
     }
 
     // Prepare update data
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (businessName !== undefined) updateData.businessName = businessName
     if (tagline !== undefined) updateData.tagline = tagline
     if (description !== undefined) updateData.description = description

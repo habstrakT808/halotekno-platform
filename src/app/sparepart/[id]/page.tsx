@@ -1,6 +1,6 @@
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
-import AddToCartButton from '@/components/cart/add-to-cart-button'
+import SparepartActions from '@/components/sparepart/sparepart-actions'
 import ImageGallery from '@/components/catalog/image-gallery'
 import {
   Star,
@@ -26,7 +26,33 @@ async function getProduct(id: string) {
 
     if (!product) return null
 
-    return product
+    // Get reviews for this product from orders
+    const reviews = await prisma.review.findMany({
+      where: {
+        type: 'PRODUCT',
+        order: {
+          items: {
+            some: {
+              productId: id,
+            },
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 10,
+    })
+
+    return { product, reviews }
   } catch (error) {
     console.error('Error fetching product:', error)
     return null
@@ -39,13 +65,20 @@ export default async function SparepartDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const product = await getProduct(id)
+  const data = await getProduct(id)
 
-  if (!product) {
+  if (!data) {
     notFound()
   }
 
+  const { product, reviews } = data
   const isInStock = product.stock > 0
+
+  // Calculate average rating
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
@@ -66,15 +99,101 @@ export default async function SparepartDetailPage({
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Left Column - Images */}
-          <div className="space-y-4">
+          {/* Left Column - Images & Reviews */}
+          <div className="space-y-6">
+            {/* Images */}
             {product.images.length > 0 ? (
-              <ImageGallery images={product.images} />
+              <ImageGallery images={product.images} productName={product.name} />
             ) : (
               <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
                 <Package className="h-24 w-24 text-gray-300" />
               </div>
             )}
+
+            {/* Reviews Section */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">Ulasan Produk</h3>
+                {reviews.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${i < Math.round(averageRating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                            }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {averageRating.toFixed(1)} ({reviews.length} ulasan)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                    >
+                      <div className="mb-2 flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {review.user.image ? (
+                            <img
+                              src={review.user.image}
+                              alt={review.user.name || 'User'}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                              <span className="text-sm font-semibold text-blue-600">
+                                {(review.user.name || 'U')[0].toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {review.user.name || 'Pengguna'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(review.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < review.rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                                }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-gray-700">{review.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center">
+                  <Star className="mx-auto mb-2 h-12 w-12 text-gray-300" />
+                  <p className="text-gray-500">Belum ada ulasan untuk produk ini</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Details */}
@@ -217,39 +336,16 @@ export default async function SparepartDetailPage({
             </div>
 
             {/* Actions */}
-            <div className="sticky bottom-0 space-y-3 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
-              {isInStock ? (
-                <>
-                  <AddToCartButton
-                    product={{
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      image: product.images[0] || '',
-                      type: 'PRODUCT',
-                      stock: product.stock,
-                    }}
-                    className="w-full"
-                  />
-                  <Link
-                    href="/cart"
-                    className="block w-full rounded-lg border-2 border-blue-600 py-3 text-center font-semibold text-blue-600 transition-all hover:bg-blue-50"
-                  >
-                    Lihat Keranjang
-                  </Link>
-                </>
-              ) : (
-                <button
-                  disabled
-                  className="w-full cursor-not-allowed rounded-lg bg-gray-300 py-3 text-center font-semibold text-gray-500"
-                >
-                  Stok Habis
-                </button>
-              )}
-              <p className="text-center text-xs text-gray-500">
-                Hubungi kami untuk informasi lebih lanjut
-              </p>
-            </div>
+            <SparepartActions
+              product={{
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                stock: product.stock,
+                images: product.images,
+              }}
+              isInStock={isInStock}
+            />
           </div>
         </div>
 

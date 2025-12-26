@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Loader2 } from 'lucide-react'
+import { Send, Bot, User } from 'lucide-react'
 
 interface Message {
     id: string
@@ -19,26 +19,17 @@ const initialMessages: Message[] = [
     },
 ]
 
-const botResponses = [
-    'Terima kasih sudah menjelaskan. Berdasarkan deskripsi Anda, kemungkinan ada masalah pada [komponen]. Untuk diagnosa lebih lanjut, kami sarankan untuk melakukan pengecekan langsung.',
-    'Saya paham masalah Anda. Untuk kasus seperti ini, biasanya membutuhkan pemeriksaan fisik perangkat. Apakah Anda ingin booking layanan Cek/Bongkar?',
-    'Baik, saya catat. Teknisi kami akan memberikan estimasi biaya setelah pemeriksaan. Untuk layanan Cek/Bongkar, biaya mulai dari Rp 50.000.',
-    'Tentu! Anda bisa langsung melakukan booking melalui halaman Jasa Cek/Bongkar. Atau jika ingin berbicara langsung dengan CS, silakan klik tombol WhatsApp.',
-]
-
 export default function ChatWindow() {
     const [messages, setMessages] = useState<Message[]>(initialMessages)
     const [input, setInput] = useState('')
-    const [isTyping, setIsTyping] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const [responseIndex, setResponseIndex] = useState(0)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-
+    // Auto-scroll to bottom of chat container only
     useEffect(() => {
-        scrollToBottom()
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+        }
     }, [messages])
 
     const handleSend = () => {
@@ -53,20 +44,7 @@ export default function ChatWindow() {
 
         setMessages((prev) => [...prev, userMessage])
         setInput('')
-        setIsTyping(true)
-
-        // Simulate bot response
-        setTimeout(() => {
-            const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'bot',
-                text: botResponses[responseIndex % botResponses.length],
-                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-            }
-            setMessages((prev) => [...prev, botMessage])
-            setResponseIndex((prev) => prev + 1)
-            setIsTyping(false)
-        }, 1500)
+        // Bot auto-reply removed
     }
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -90,7 +68,7 @@ export default function ChatWindow() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message) => (
                     <div
                         key={message.id}
@@ -120,21 +98,6 @@ export default function ChatWindow() {
                     </div>
                 ))}
 
-                {isTyping && (
-                    <div className="flex items-end gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                            <Bot className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="rounded-2xl rounded-bl-none bg-gray-100 px-4 py-3">
-                            <div className="flex gap-1">
-                                <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }}></div>
-                                <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }}></div>
-                                <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }}></div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 <div ref={messagesEndRef} />
             </div>
 
@@ -151,14 +114,10 @@ export default function ChatWindow() {
                     />
                     <button
                         onClick={handleSend}
-                        disabled={!input.trim() || isTyping}
+                        disabled={!input.trim()}
                         className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:opacity-50"
                     >
-                        {isTyping ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                            <Send className="h-5 w-5" />
-                        )}
+                        <Send className="h-5 w-5" />
                     </button>
                 </div>
             </div>

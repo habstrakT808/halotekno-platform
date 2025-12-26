@@ -31,16 +31,17 @@ export default auth((req) => {
   }
 
   // Redirect to dashboard if accessing auth routes while logged in
-  if (isAuthRoute && isLoggedIn) {
-    const userRole = req.auth?.user?.role
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard/admin', req.url))
-    } else if (userRole === 'MITRA') {
-      return NextResponse.redirect(new URL('/dashboard/mitra', req.url))
-    } else {
-      return NextResponse.redirect(new URL('/dashboard/customer', req.url))
-    }
-  }
+  // Disabled: Let login page handle redirect to detect technician users
+  // if (isAuthRoute && isLoggedIn) {
+  //   const userRole = req.auth?.user?.role
+  //   if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+  //     return NextResponse.redirect(new URL('/dashboard/admin', req.url))
+  //   } else if (userRole === 'MITRA') {
+  //     return NextResponse.redirect(new URL('/dashboard/mitra', req.url))
+  //   } else {
+  //     return NextResponse.redirect(new URL('/dashboard/customer', req.url))
+  //   }
+  // }
 
   // Role-based access control
   if (isLoggedIn && req.auth?.user) {
