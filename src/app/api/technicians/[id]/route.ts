@@ -4,15 +4,14 @@ import { db } from '@/lib/db'
 // GET /api/technicians/[id] - Public technician detail
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     const technician = await db.technician.findUnique({
       where: {
-        id: params.id,
-        user: {
-          isActive: true,
-        },
+        id,
       },
       include: {
         user: {
@@ -22,6 +21,7 @@ export async function GET(
             image: true,
             phone: true,
             email: true,
+            isActive: true,
           },
         },
         services: {
@@ -42,12 +42,20 @@ export async function GET(
       )
     }
 
+    // Check if user is active
+    if (!technician.user.isActive) {
+      return NextResponse.json(
+        { error: 'Technician not available' },
+        { status: 404 }
+      )
+    }
+
     // Get reviews for this technician (from orders)
     const reviews = await db.review.findMany({
       where: {
         type: 'TECHNICIAN',
         order: {
-          technicianId: params.id,
+          technicianId: id,
         },
       },
       take: 10,

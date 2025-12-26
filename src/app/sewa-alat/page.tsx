@@ -1,149 +1,99 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
 import { FilterSidebar } from '@/components/catalog/filter-sidebar'
 import { ProductCard } from '@/components/catalog/product-card'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal, X, Loader2 } from 'lucide-react'
 
-// Dummy data
-const sewaAlatData = [
-  {
-    id: '1',
-    name: 'Laptop HP EliteBook 840 G8',
-    photo:
-      'https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=400&q=80',
-    category: 'Laptop',
-    specs: 'i7-1165G7, 16GB RAM, 512GB SSD',
-    dailyRate: 150000,
-    weeklyRate: 900000,
-    monthlyRate: 3000000,
-    rating: 4.8,
-    reviewCount: 145,
-    availability: true,
-    condition: 'Seperti Baru',
-  },
-  {
-    id: '2',
-    name: 'iPhone 13 Pro Max 256GB',
-    photo:
-      'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&q=80',
-    category: 'Smartphone',
-    specs: 'A15 Bionic, 6GB RAM, 256GB',
-    dailyRate: 200000,
-    weeklyRate: 1200000,
-    monthlyRate: 4000000,
-    rating: 4.9,
-    reviewCount: 230,
-    availability: true,
-    condition: 'Sangat Baik',
-  },
-  {
-    id: '3',
-    name: 'iPad Pro 12.9" M1 2021',
-    photo:
-      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&q=80',
-    category: 'Tablet',
-    specs: 'M1 Chip, 8GB RAM, 256GB',
-    dailyRate: 180000,
-    weeklyRate: 1000000,
-    monthlyRate: 3500000,
-    rating: 4.7,
-    reviewCount: 98,
-    availability: false,
-    condition: 'Baik',
-  },
-  {
-    id: '4',
-    name: 'MacBook Pro 14" M1 Pro',
-    photo:
-      'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80',
-    category: 'Laptop',
-    specs: 'M1 Pro, 16GB RAM, 512GB SSD',
-    dailyRate: 250000,
-    weeklyRate: 1500000,
-    monthlyRate: 5000000,
-    rating: 4.9,
-    reviewCount: 312,
-    availability: true,
-    condition: 'Seperti Baru',
-  },
-  {
-    id: '5',
-    name: 'Samsung Galaxy Tab S8 Ultra',
-    photo:
-      'https://images.unsplash.com/photo-1585790050230-5dd28404f1e9?w=400&q=80',
-    category: 'Tablet',
-    specs: 'Snapdragon 8 Gen 1, 12GB RAM',
-    dailyRate: 120000,
-    weeklyRate: 700000,
-    monthlyRate: 2500000,
-    rating: 4.6,
-    reviewCount: 76,
-    availability: true,
-    condition: 'Baik',
-  },
-  {
-    id: '6',
-    name: 'Dell XPS 15 9520',
-    photo:
-      'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&q=80',
-    category: 'Laptop',
-    specs: 'i7-12700H, 32GB RAM, 1TB SSD',
-    dailyRate: 200000,
-    weeklyRate: 1200000,
-    monthlyRate: 4000000,
-    rating: 4.8,
-    reviewCount: 189,
-    availability: true,
-    condition: 'Sangat Baik',
-  },
-]
-
-const filterGroups = [
-  {
-    title: 'Kategori',
-    type: 'checkbox' as const,
-    options: [
-      { value: 'laptop', label: 'Laptop', count: 45 },
-      { value: 'smartphone', label: 'Smartphone', count: 38 },
-      { value: 'tablet', label: 'Tablet', count: 25 },
-      { value: 'camera', label: 'Kamera', count: 15 },
-    ],
-  },
-  {
-    title: 'Harga per Hari',
-    type: 'radio' as const,
-    options: [
-      { value: 'under-100k', label: 'Di bawah 100rb' },
-      { value: '100k-200k', label: '100rb - 200rb' },
-      { value: '200k-300k', label: '200rb - 300rb' },
-      { value: 'above-300k', label: 'Di atas 300rb' },
-    ],
-  },
-  {
-    title: 'Kondisi',
-    type: 'checkbox' as const,
-    options: [
-      { value: 'like-new', label: 'Seperti Baru', count: 32 },
-      { value: 'excellent', label: 'Sangat Baik', count: 45 },
-      { value: 'good', label: 'Baik', count: 28 },
-    ],
-  },
-  {
-    title: 'Ketersediaan',
-    type: 'radio' as const,
-    options: [
-      { value: 'available', label: 'Tersedia Sekarang' },
-      { value: 'all', label: 'Semua' },
-    ],
-  },
-]
+interface RentalItem {
+  id: string
+  name: string
+  description: string | null
+  pricePerDay: number
+  stock: number
+  images: string[]
+  isActive: boolean
+}
 
 export default function SewaAlatPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [rentalItems, setRentalItems] = useState<RentalItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [availability, setAvailability] = useState('all')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState({ total: 0, available: 0, unavailable: 0 })
+
+  // Fetch rental items from API
+  const fetchRentalItems = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+      })
+
+      if (searchQuery) params.set('search', searchQuery)
+      if (availability !== 'all') params.set('availability', availability)
+
+      const res = await fetch(`/api/rental-items?${params}`)
+      if (!res.ok) throw new Error('Failed to fetch rental items')
+
+      const data = await res.json()
+      setRentalItems(data.rentalItems || [])
+      setTotalPages(data.pagination?.totalPages || 1)
+      setTotal(data.pagination?.total || 0)
+      setStats(data.stats || { total: 0, available: 0, unavailable: 0 })
+    } catch (error) {
+      console.error('Error fetching rental items:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRentalItems()
+  }, [page, searchQuery, availability])
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setPage(1)
+  }
+
+  const handleSort = (value: string) => {
+    // TODO: Implement sorting
+  }
+
+  const handleFilterChange = (filters: Record<string, string[]>) => {
+    const ketersediaan = filters['Ketersediaan']?.[0] || 'all'
+    setAvailability(ketersediaan)
+    setPage(1)
+  }
+
+  const handleClearFilters = () => {
+    setAvailability('all')
+    setPage(1)
+  }
+
+  const filterGroups = [
+    {
+      title: 'Ketersediaan',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Semua', count: stats.total },
+        {
+          value: 'available',
+          label: 'Tersedia Sekarang',
+          count: stats.available,
+        },
+      ],
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
@@ -153,16 +103,40 @@ export default function SewaAlatPage() {
         {/* Hero Section */}
         <div className="mb-8">
           <h1 className="mb-3 text-4xl font-bold text-gray-900">
-            Katalog Sewa Alat
+            Sewa Alat & Gadget
           </h1>
           <p className="text-lg text-gray-600">
-            Sewa gadget berkualitas untuk kebutuhan Anda
+            Sewa perangkat berkualitas untuk kebutuhan Anda
           </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">Total Alat</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">
+              {stats.total}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">Tersedia</p>
+            <p className="mt-1 text-3xl font-bold text-green-600">
+              {stats.available}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">Tidak Tersedia</p>
+            <p className="mt-1 text-3xl font-bold text-red-600">
+              {stats.unavailable}
+            </p>
+          </div>
         </div>
 
         {/* Search Bar */}
         <SearchBar
-          placeholder="Cari alat berdasarkan nama atau kategori..."
+          placeholder="Cari alat sewa..."
+          onSearch={handleSearch}
+          onSortChange={handleSort}
           sortOptions={[
             { value: 'popular', label: 'Paling Populer' },
             { value: 'price-low', label: 'Harga Terendah' },
@@ -186,7 +160,11 @@ export default function SewaAlatPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Desktop Filter Sidebar */}
           <aside className="hidden lg:col-span-1 lg:block">
-            <FilterSidebar filters={filterGroups} />
+            <FilterSidebar
+              filters={filterGroups}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+            />
           </aside>
 
           {/* Mobile Filter Drawer */}
@@ -210,83 +188,115 @@ export default function SewaAlatPage() {
                   </button>
                 </div>
                 <div className="p-6">
-                  <FilterSidebar filters={filterGroups} />
+                  <FilterSidebar
+                    filters={filterGroups}
+                    onFilterChange={handleFilterChange}
+                    onClearFilters={handleClearFilters}
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Product Grid */}
+          {/* Rental Items Grid */}
           <div className="lg:col-span-3">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Menampilkan{' '}
-                <span className="font-semibold">{sewaAlatData.length}</span>{' '}
-                alat
+                Menampilkan <span className="font-semibold">{total}</span> alat
               </p>
             </div>
 
-            {/* Mobile: Masonry 2 columns */}
-            <div className="columns-2 gap-6 space-y-6 md:hidden">
-              {sewaAlatData.map((item) => (
-                <div key={item.id} className="mb-6 break-inside-avoid">
-                  <ProductCard
-                    id={item.id}
-                    title={item.name}
-                    image={item.photo}
-                    description={item.specs}
-                    price={item.dailyRate}
-                    rating={item.rating}
-                    reviewCount={item.reviewCount}
-                    badge={item.availability ? 'Tersedia' : 'Tidak Tersedia'}
-                    badgeColor={item.availability ? 'green' : 'red'}
-                    href={`/sewa-alat/${item.id}`}
-                    actionLabel="Lihat Detail"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop: Regular grid 3 columns */}
-            <div className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
-              {sewaAlatData.map((item) => (
-                <ProductCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.name}
-                  image={item.photo}
-                  description={item.specs}
-                  price={item.dailyRate}
-                  rating={item.rating}
-                  reviewCount={item.reviewCount}
-                  badge={item.availability ? 'Tersedia' : 'Tidak Tersedia'}
-                  badgeColor={item.availability ? 'green' : 'red'}
-                  href={`/sewa-alat/${item.id}`}
-                  actionLabel="Lihat Detail"
-                />
-              ))}
-            </div>
-
-            {/* Pagination Placeholder */}
-            <div className="mt-8 flex justify-center">
-              <div className="flex gap-2">
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="rounded-lg bg-blue-600 px-4 py-2 text-white">
-                  1
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  2
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  3
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  Next
-                </button>
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-            </div>
+            ) : rentalItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <p className="text-gray-500">Tidak ada alat sewa ditemukan</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: Masonry 2 columns */}
+                <div className="columns-2 gap-6 space-y-6 md:hidden">
+                  {rentalItems.map((item) => (
+                    <div key={item.id} className="mb-6 break-inside-avoid">
+                      <ProductCard
+                        id={item.id}
+                        title={item.name}
+                        image={item.images[0] || '/placeholder.png'}
+                        description={
+                          item.description || 'Alat sewa berkualitas'
+                        }
+                        price={item.pricePerDay}
+                        priceLabel="/ hari"
+                        badge={item.stock > 0 ? 'Tersedia' : 'Tidak Tersedia'}
+                        badgeColor={item.stock > 0 ? 'green' : 'red'}
+                        href={`/sewa-alat/${item.id}`}
+                        actionLabel="Sewa Sekarang"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Regular grid 3 columns */}
+                <div className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
+                  {rentalItems.map((item) => (
+                    <ProductCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.name}
+                      image={item.images[0] || '/placeholder.png'}
+                      description={item.description || 'Alat sewa berkualitas'}
+                      price={item.pricePerDay}
+                      priceLabel="/ hari"
+                      badge={item.stock > 0 ? 'Tersedia' : 'Tidak Tersedia'}
+                      badgeColor={item.stock > 0 ? 'green' : 'red'}
+                      href={`/sewa-alat/${item.id}`}
+                      actionLabel="Sewa Sekarang"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && !loading && (
+              <div className="mt-8 flex justify-center">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`rounded-lg px-4 py-2 ${
+                          page === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 transition-colors hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
+                  <button
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page === totalPages}
+                    className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

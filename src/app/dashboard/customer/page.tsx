@@ -7,18 +7,82 @@ import {
   Clock,
   Smartphone,
   Headphones,
-  Laptop,
-  Cpu,
 } from 'lucide-react'
 import Link from 'next/link'
+import prisma from '@/lib/db'
 
 export const metadata = {
   title: 'Dashboard - HaloTekno',
 }
 
-export default function CustomerDashboard() {
+async function getData() {
+  try {
+    // Fetch top technicians (with user data and ratings)
+    const technicians = await prisma.technician.findMany({
+      where: { isAvailable: true },
+      include: {
+        user: {
+          select: {
+            name: true,
+            image: true,
+          },
+        },
+        services: {
+          take: 1,
+          orderBy: { price: 'asc' },
+        },
+      },
+      orderBy: { rating: 'desc' },
+      take: 4,
+    })
+
+    // Fetch top spareparts (active products only)
+    const products = await prisma.product.findMany({
+      where: { isActive: true, stock: { gt: 0 } },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+    })
+
+    // Fetch rental items with stock
+    const rentalItems = await prisma.rentalItem.findMany({
+      where: { isActive: true, stock: { gt: 0 } },
+      orderBy: { createdAt: 'desc' },
+      take: 2,
+    })
+
+    // Get stats
+    const stats = {
+      totalProducts: await prisma.product.count({ where: { isActive: true } }),
+      totalTechnicians: await prisma.technician.count({
+        where: { isAvailable: true },
+      }),
+      totalRentalItems: await prisma.rentalItem.count({
+        where: { isActive: true },
+      }),
+    }
+
+    return {
+      technicians,
+      products,
+      rentalItems,
+      stats,
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error)
+    return {
+      technicians: [],
+      products: [],
+      rentalItems: [],
+      stats: { totalProducts: 0, totalTechnicians: 0, totalRentalItems: 0 },
+    }
+  }
+}
+
+export default async function CustomerDashboard() {
+  const { technicians, products, rentalItems, stats } = await getData()
+
   return (
-    <div className="min-h-screen relative">
+    <div className="relative min-h-screen">
       {/* Background Image with Overlay */}
       <div className="fixed inset-0 -z-10">
         <div
@@ -34,7 +98,7 @@ export default function CustomerDashboard() {
 
       <Navbar variant="light" />
 
-      <main className="pt-24 pb-16 relative z-10">
+      <main className="relative z-10 pb-16 pt-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Main Banner with Tech Background */}
           <div className="mb-6">
@@ -53,7 +117,9 @@ export default function CustomerDashboard() {
               {/* Content */}
               <div className="relative flex h-full items-center px-12">
                 <div className="max-w-xl">
-                  <h1 className="mb-3 text-4xl font-bold text-white">HaloTekno</h1>
+                  <h1 className="mb-3 text-4xl font-bold text-white">
+                    HaloTekno
+                  </h1>
                   <p className="text-xl text-blue-50">
                     Layanan Servis dan Penjualan Gadget No. 1
                   </p>
@@ -185,7 +251,9 @@ export default function CustomerDashboard() {
                   <h3 className="text-sm font-semibold text-gray-900">
                     Jual Sparepart
                   </h3>
-                  <p className="text-xs text-gray-600">1000+ Item</p>
+                  <p className="text-xs text-gray-600">
+                    {stats.totalProducts}+ Item
+                  </p>
                 </div>
               </Link>
 
@@ -218,7 +286,9 @@ export default function CustomerDashboard() {
           {/* Katalog Teknisi */}
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">TEKNISI TERBAIK</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                TEKNISI TERBAIK
+              </h2>
               <Link
                 href="/teknisi"
                 className="text-sm font-medium text-blue-600 hover:text-blue-700"
@@ -226,50 +296,63 @@ export default function CustomerDashboard() {
                 Lihat Semua →
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&q=80',
-                'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&q=80',
-                'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80',
-                'https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=400&q=80',
-              ].map((img, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
-                >
-                  <div className="aspect-square overflow-hidden bg-blue-50">
-                    <img
-                      src={img}
-                      alt={`Teknisi ${i + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="mb-1 font-semibold text-gray-900">
-                      Teknisi {i + 1}
-                    </h3>
-                    <p className="mb-2 text-xs text-gray-600">
-                      Spesialis HP & Laptop
-                    </p>
-                    <div className="mb-2 flex items-center gap-1">
-                      <span className="text-yellow-500">★</span>
-                      <span className="text-sm font-medium">4.8</span>
-                      <span className="text-xs text-gray-500">(120)</span>
-                    </div>
-                    <p className="text-sm font-bold text-blue-600">
-                      Mulai Rp 50.000
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+
+            {technicians.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {technicians.map((tech) => {
+                  const minPrice = tech.services[0]?.price || 50000
+                  return (
+                    <Link
+                      key={tech.id}
+                      href={`/teknisi/${tech.id}`}
+                      className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
+                    >
+                      <div className="aspect-square overflow-hidden bg-blue-50">
+                        <img
+                          src={
+                            tech.user.image ||
+                            'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&q=80'
+                          }
+                          alt={tech.user.name || 'Teknisi'}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-1 truncate font-semibold text-gray-900">
+                          {tech.user.name || 'Teknisi'}
+                        </h3>
+                        <p className="mb-2 truncate text-xs text-gray-600">
+                          {tech.specialties.slice(0, 2).join(', ')}
+                        </p>
+                        <div className="mb-2 flex items-center gap-1">
+                          <span className="text-yellow-500">★</span>
+                          <span className="text-sm font-medium">
+                            {tech.rating.toFixed(1)}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ({tech.totalReview})
+                          </span>
+                        </div>
+                        <p className="text-sm font-bold text-blue-600">
+                          Mulai Rp {minPrice.toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="py-8 text-center text-gray-500">
+                Belum ada teknisi tersedia
+              </p>
+            )}
           </div>
 
           {/* Katalog Sparepart */}
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">
-                SPAREPART TERLARIS
+                SPAREPART TERBARU
               </h2>
               <Link
                 href="/sparepart"
@@ -278,97 +361,130 @@ export default function CustomerDashboard() {
                 Lihat Semua →
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80',
-                'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80',
-                'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=400&q=80',
-                'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80',
-              ].map((img, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
-                >
-                  <div className="aspect-square overflow-hidden bg-blue-50">
-                    <img
-                      src={img}
-                      alt={`LCD iPhone ${i + 1}3`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="mb-1 font-semibold text-gray-900">
-                      LCD iPhone {i + 1}3
-                    </h3>
-                    <p className="mb-2 text-xs text-gray-600">Original Quality</p>
-                    <div className="mb-2 flex items-center gap-1">
-                      <span className="text-xs text-gray-500">Terjual 500+</span>
+
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {products.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/sparepart/${product.id}`}
+                    className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
+                  >
+                    <div className="aspect-square overflow-hidden bg-blue-50">
+                      <img
+                        src={
+                          product.images[0] ||
+                          'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80'
+                        }
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-blue-600">Rp 850.000</p>
-                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700">
-                        Stok Ada
-                      </span>
+                    <div className="p-4">
+                      <h3 className="mb-1 truncate font-semibold text-gray-900">
+                        {product.name}
+                      </h3>
+                      <p className="mb-2 truncate text-xs text-gray-600">
+                        {product.brand || 'Original'} • {product.category}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-blue-600">
+                          Rp {product.price.toLocaleString('id-ID')}
+                        </p>
+                        <span
+                          className={`rounded px-2 py-1 text-xs ${
+                            product.stock > 5
+                              ? 'bg-green-100 text-green-700'
+                              : product.stock > 0
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {product.stock > 0
+                            ? `Stok ${product.stock}`
+                            : 'Habis'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="py-8 text-center text-gray-500">
+                Belum ada sparepart tersedia
+              </p>
+            )}
           </div>
 
-          {/* Katalog Rekomendasi Tempat */}
+          {/* Katalog Rental Items (Rekomendasi) */}
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">
-                REKOMENDASI TEMPAT SERVIS
+                ALAT SEWA TERSEDIA
               </h2>
               <Link
-                href="/rekomendasi"
+                href="/sewa-alat"
                 className="text-sm font-medium text-blue-600 hover:text-blue-700"
               >
                 Lihat Semua →
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {[
-                'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80',
-                'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80',
-              ].map((img, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
-                >
-                  <div className="flex gap-4 p-4">
-                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-blue-50">
-                      <img
-                        src={img}
-                        alt={`Toko Servis ${i + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="mb-1 font-semibold text-gray-900">
-                        Toko Servis {i + 1}
-                      </h3>
-                      <p className="mb-2 text-xs text-gray-600">
-                        Jl. Contoh No. {i + 1}23, Jakarta
-                      </p>
-                      <div className="mb-2 flex items-center gap-1">
-                        <span className="text-yellow-500">★</span>
-                        <span className="text-sm font-medium">4.9</span>
-                        <span className="text-xs text-gray-500">(250 review)</span>
+
+            {rentalItems.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {rentalItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/sewa-alat/${item.id}`}
+                    className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-blue-300 hover:shadow-lg"
+                  >
+                    <div className="flex gap-4 p-4">
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-blue-50">
+                        <img
+                          src={
+                            item.images[0] ||
+                            'https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=400&q=80'
+                          }
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                        />
                       </div>
-                      <div className="flex gap-2">
-                        <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
-                          Buka
-                        </span>
-                        <span className="text-xs text-gray-500">08:00 - 20:00</span>
+                      <div className="flex-1">
+                        <h3 className="mb-1 font-semibold text-gray-900">
+                          {item.name}
+                        </h3>
+                        <p className="mb-2 truncate text-xs text-gray-600">
+                          {item.description || 'Alat sewa berkualitas'}
+                        </p>
+                        <p className="mb-2 text-sm font-bold text-blue-600">
+                          Rp {item.pricePerDay.toLocaleString('id-ID')} / hari
+                        </p>
+                        <div className="flex gap-2">
+                          <span
+                            className={`rounded px-2 py-1 text-xs ${
+                              item.stock > 0
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {item.stock > 0 ? 'Tersedia' : 'Tidak Tersedia'}
+                          </span>
+                          {item.stock > 0 && (
+                            <span className="text-xs text-gray-500">
+                              {item.stock} unit
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="py-8 text-center text-gray-500">
+                Belum ada alat sewa tersedia
+              </p>
+            )}
           </div>
         </div>
       </main>

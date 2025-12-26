@@ -1,141 +1,152 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
 import { SearchBar } from '@/components/catalog/search-bar'
 import { FilterSidebar } from '@/components/catalog/filter-sidebar'
 import { ProductCard } from '@/components/catalog/product-card'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal, X, Loader2 } from 'lucide-react'
 
-// Dummy data
-const sparepartData = [
-  {
-    id: '1',
-    name: 'LCD iPhone 13 Pro Max',
-    photo:
-      'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80',
-    category: 'Layar',
-    brand: 'Apple',
-    price: 2500000,
-    rating: 4.8,
-    reviewCount: 245,
-    stock: 15,
-    condition: 'Baru',
-  },
-  {
-    id: '2',
-    name: 'Baterai Samsung Galaxy S23',
-    photo:
-      'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80',
-    category: 'Baterai',
-    brand: 'Samsung',
-    price: 450000,
-    rating: 4.7,
-    reviewCount: 189,
-    stock: 32,
-    condition: 'Baru',
-  },
-  {
-    id: '3',
-    name: 'Kamera Belakang Xiaomi 12',
-    photo:
-      'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=400&q=80',
-    category: 'Kamera',
-    brand: 'Xiaomi',
-    price: 850000,
-    rating: 4.6,
-    reviewCount: 156,
-    stock: 8,
-    condition: 'Baru',
-  },
-  {
-    id: '4',
-    name: 'Charger Original iPhone',
-    photo:
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80',
-    category: 'Aksesoris',
-    brand: 'Apple',
-    price: 350000,
-    rating: 4.9,
-    reviewCount: 412,
-    stock: 50,
-    condition: 'Baru',
-  },
-  {
-    id: '5',
-    name: 'Motherboard Oppo Reno 8',
-    photo:
-      'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80',
-    category: 'Motherboard',
-    brand: 'Oppo',
-    price: 1800000,
-    rating: 4.5,
-    reviewCount: 78,
-    stock: 3,
-    condition: 'Baru',
-  },
-  {
-    id: '6',
-    name: 'Touchscreen Vivo V27',
-    photo:
-      'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80',
-    category: 'Layar',
-    brand: 'Vivo',
-    price: 650000,
-    rating: 4.7,
-    reviewCount: 134,
-    stock: 12,
-    condition: 'Baru',
-  },
-]
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  category: string
+  brand: string | null
+  price: number
+  stock: number
+  images: string[]
+  isActive: boolean
+}
 
-const filterGroups = [
-  {
-    title: 'Kategori',
-    type: 'checkbox' as const,
-    options: [
-      { value: 'layar', label: 'Layar', count: 156 },
-      { value: 'baterai', label: 'Baterai', count: 98 },
-      { value: 'kamera', label: 'Kamera', count: 67 },
-      { value: 'motherboard', label: 'Motherboard', count: 45 },
-      { value: 'aksesoris', label: 'Aksesoris', count: 234 },
-    ],
-  },
-  {
-    title: 'Brand',
-    type: 'checkbox' as const,
-    options: [
-      { value: 'apple', label: 'Apple', count: 89 },
-      { value: 'samsung', label: 'Samsung', count: 112 },
-      { value: 'xiaomi', label: 'Xiaomi', count: 95 },
-      { value: 'oppo', label: 'Oppo', count: 78 },
-      { value: 'vivo', label: 'Vivo', count: 65 },
-    ],
-  },
-  {
-    title: 'Harga',
-    type: 'radio' as const,
-    options: [
-      { value: 'under-500k', label: 'Di bawah 500rb' },
-      { value: '500k-1m', label: '500rb - 1jt' },
-      { value: '1m-2m', label: '1jt - 2jt' },
-      { value: 'above-2m', label: 'Di atas 2jt' },
-    ],
-  },
-  {
-    title: 'Kondisi',
-    type: 'radio' as const,
-    options: [
-      { value: 'new', label: 'Baru' },
-      { value: 'refurbished', label: 'Refurbished' },
-      { value: 'used', label: 'Bekas' },
-    ],
-  },
-]
+interface FilterOption {
+  value: string
+  label: string
+  count?: number
+}
 
 export default function SparepartPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [brandFilter, setBrandFilter] = useState('')
+  const [priceRange, setPriceRange] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [categoryOptions, setCategoryOptions] = useState<FilterOption[]>([])
+  const [brandOptions, setBrandOptions] = useState<FilterOption[]>([])
+
+  // Fetch products from API
+  const fetchProducts = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+      })
+
+      if (searchQuery) params.set('search', searchQuery)
+      if (categoryFilter) params.set('category', categoryFilter)
+      if (brandFilter) params.set('brand', brandFilter)
+
+      // Add price range filter
+      if (priceRange) {
+        switch (priceRange) {
+          case 'under-500k':
+            params.set('maxPrice', '500000')
+            break
+          case '500k-1m':
+            params.set('minPrice', '500000')
+            params.set('maxPrice', '1000000')
+            break
+          case '1m-2m':
+            params.set('minPrice', '1000000')
+            params.set('maxPrice', '2000000')
+            break
+          case 'above-2m':
+            params.set('minPrice', '2000000')
+            break
+        }
+      }
+
+      const res = await fetch(`/api/products?${params}`)
+      if (!res.ok) throw new Error('Failed to fetch products')
+
+      const data = await res.json()
+      setProducts(data.products || [])
+      setTotalPages(data.pagination?.totalPages || 1)
+      setTotal(data.pagination?.total || 0)
+
+      // Set filter options from API
+      if (data.filters) {
+        setCategoryOptions(data.filters.categories || [])
+        setBrandOptions(data.filters.brands || [])
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [page, searchQuery, categoryFilter, brandFilter, priceRange])
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setPage(1)
+  }
+
+  const handleSort = (value: string) => {
+    // TODO: Implement sorting
+  }
+
+  const handleFilterChange = (filters: Record<string, string[]>) => {
+    // Update filters based on FilterSidebar callback
+    const kategori = filters['Kategori']?.[0] || ''
+    const brand = filters['Brand']?.[0] || ''
+    const harga = filters['Harga']?.[0] || ''
+
+    setCategoryFilter(kategori)
+    setBrandFilter(brand)
+    setPriceRange(harga)
+    setPage(1)
+  }
+
+  const handleClearFilters = () => {
+    setCategoryFilter('')
+    setBrandFilter('')
+    setPriceRange('')
+    setPage(1)
+  }
+
+  const filterGroups = [
+    {
+      title: 'Kategori',
+      type: 'checkbox' as const,
+      options: categoryOptions,
+    },
+    {
+      title: 'Brand',
+      type: 'checkbox' as const,
+      options: brandOptions,
+    },
+    {
+      title: 'Harga',
+      type: 'radio' as const,
+      options: [
+        { value: 'under-500k', label: 'Di bawah 500rb' },
+        { value: '500k-1m', label: '500rb - 1jt' },
+        { value: '1m-2m', label: '1jt - 2jt' },
+        { value: 'above-2m', label: 'Di atas 2jt' },
+      ],
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/40">
@@ -155,6 +166,8 @@ export default function SparepartPage() {
         {/* Search Bar */}
         <SearchBar
           placeholder="Cari sparepart berdasarkan nama atau brand..."
+          onSearch={handleSearch}
+          onSortChange={handleSort}
           sortOptions={[
             { value: 'popular', label: 'Paling Populer' },
             { value: 'price-low', label: 'Harga Terendah' },
@@ -179,7 +192,11 @@ export default function SparepartPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Desktop Filter Sidebar */}
           <aside className="hidden lg:col-span-1 lg:block">
-            <FilterSidebar filters={filterGroups} />
+            <FilterSidebar
+              filters={filterGroups}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+            />
           </aside>
 
           {/* Mobile Filter Drawer */}
@@ -203,7 +220,11 @@ export default function SparepartPage() {
                   </button>
                 </div>
                 <div className="p-6">
-                  <FilterSidebar filters={filterGroups} />
+                  <FilterSidebar
+                    filters={filterGroups}
+                    onFilterChange={handleFilterChange}
+                    onClearFilters={handleClearFilters}
+                  />
                 </div>
               </div>
             </div>
@@ -213,73 +234,98 @@ export default function SparepartPage() {
           <div className="lg:col-span-3">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Menampilkan{' '}
-                <span className="font-semibold">{sparepartData.length}</span>{' '}
+                Menampilkan <span className="font-semibold">{total}</span>{' '}
                 produk
               </p>
             </div>
 
-            {/* Mobile: Masonry 2 columns */}
-            <div className="columns-2 gap-6 space-y-6 md:hidden">
-              {sparepartData.map((item) => (
-                <div key={item.id} className="mb-6 break-inside-avoid">
-                  <ProductCard
-                    id={item.id}
-                    title={item.name}
-                    image={item.photo}
-                    description={`${item.brand} • ${item.category}`}
-                    price={item.price}
-                    rating={item.rating}
-                    reviewCount={item.reviewCount}
-                    badge={item.stock > 0 ? `Stok: ${item.stock}` : 'Habis'}
-                    badgeColor={item.stock > 0 ? 'green' : 'red'}
-                    href={`/sparepart/${item.id}`}
-                    actionLabel="Lihat Detail"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop: Regular grid 3 columns */}
-            <div className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
-              {sparepartData.map((item) => (
-                <ProductCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.name}
-                  image={item.photo}
-                  description={`${item.brand} • ${item.category}`}
-                  price={item.price}
-                  rating={item.rating}
-                  reviewCount={item.reviewCount}
-                  badge={item.stock > 0 ? `Stok: ${item.stock}` : 'Habis'}
-                  badgeColor={item.stock > 0 ? 'green' : 'red'}
-                  href={`/sparepart/${item.id}`}
-                  actionLabel="Lihat Detail"
-                />
-              ))}
-            </div>
-
-            {/* Pagination Placeholder */}
-            <div className="mt-8 flex justify-center">
-              <div className="flex gap-2">
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="rounded-lg bg-blue-600 px-4 py-2 text-white">
-                  1
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  2
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  3
-                </button>
-                <button className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50">
-                  Next
-                </button>
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-            </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <p className="text-gray-500">Tidak ada produk ditemukan</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: Masonry 2 columns */}
+                <div className="columns-2 gap-6 space-y-6 md:hidden">
+                  {products.map((item) => (
+                    <div key={item.id} className="mb-6 break-inside-avoid">
+                      <ProductCard
+                        id={item.id}
+                        title={item.name}
+                        image={item.images[0] || '/placeholder.png'}
+                        description={`${item.brand || 'No Brand'} • ${item.category}`}
+                        price={item.price}
+                        badge={item.stock > 0 ? `Stok: ${item.stock}` : 'Habis'}
+                        badgeColor={item.stock > 0 ? 'green' : 'red'}
+                        href={`/sparepart/${item.id}`}
+                        actionLabel="Lihat Detail"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Regular grid 3 columns */}
+                <div className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
+                  {products.map((item) => (
+                    <ProductCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.name}
+                      image={item.images[0] || '/placeholder.png'}
+                      description={`${item.brand || 'No Brand'} • ${item.category}`}
+                      price={item.price}
+                      badge={item.stock > 0 ? `Stok: ${item.stock}` : 'Habis'}
+                      badgeColor={item.stock > 0 ? 'green' : 'red'}
+                      href={`/sparepart/${item.id}`}
+                      actionLabel="Lihat Detail"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && !loading && (
+              <div className="mt-8 flex justify-center">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`rounded-lg px-4 py-2 ${
+                          page === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 transition-colors hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
+                  <button
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page === totalPages}
+                    className="rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
