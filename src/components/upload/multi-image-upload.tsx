@@ -36,8 +36,11 @@ export default function MultiImageUpload({
     }
   }, [])
 
-  const handleUploadSuccess = (result: { info: { secure_url: string } }) => {
-    const newUrl = result.info.secure_url
+  const handleUploadSuccess = (result: unknown) => {
+    const uploadResult = result as { info?: { secure_url?: string } }
+    const newUrl = uploadResult.info?.secure_url
+
+    if (!newUrl) return
 
     // Add to ref
     const updatedImages = [...imagesRef.current, newUrl]

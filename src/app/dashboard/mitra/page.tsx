@@ -157,9 +157,11 @@ export default function MitraDashboard() {
     if (profile.city) completed++
     if (profile.phone) completed++
     if (profile.banner) completed++
-    if (profile.services?.length > 0) completed++
-    if (profile.images?.length > 0) completed++
-    if (profile.features?.length > 0) completed++
+    if (Array.isArray(profile.services) && profile.services.length > 0)
+      completed++
+    if (Array.isArray(profile.images) && profile.images.length > 0) completed++
+    if (Array.isArray(profile.features) && profile.features.length > 0)
+      completed++
     return Math.round((completed / total) * 100)
   }
 

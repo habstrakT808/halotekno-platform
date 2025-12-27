@@ -30,8 +30,11 @@ export default function ImageUpload({
     }
   }, [])
 
-  const handleUploadSuccess = (result: { info: { secure_url: string } }) => {
-    onChange(result.info.secure_url)
+  const handleUploadSuccess = (result: unknown) => {
+    const uploadResult = result as { info?: { secure_url?: string } }
+    if (uploadResult.info?.secure_url) {
+      onChange(uploadResult.info.secure_url)
+    }
     setIsUploading(false)
     // Restore scroll immediately after upload
     setTimeout(() => {

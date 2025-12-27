@@ -171,13 +171,20 @@ export async function POST(request: NextRequest) {
     // Create services if provided
     if (body.services && Array.isArray(body.services)) {
       await prisma.mitraService.createMany({
-        data: body.services.map((service: { name: string; description?: string; icon?: string; price?: number }) => ({
-          mitraId: mitra.id,
-          name: service.name,
-          description: service.description || null,
-          icon: service.icon || null,
-          price: service.price || null,
-        })),
+        data: body.services.map(
+          (service: {
+            name: string
+            description?: string
+            icon?: string
+            price?: number
+          }) => ({
+            mitraId: mitra.id,
+            name: service.name,
+            description: service.description || null,
+            icon: service.icon || null,
+            price: service.price || null,
+          })
+        ),
       })
     }
 
@@ -186,7 +193,7 @@ export async function POST(request: NextRequest) {
       await prisma.mitraImage.createMany({
         data: body.images.map((image: { url?: string } | string) => ({
           mitraId: mitra.id,
-          url: image.url || image,
+          url: typeof image === 'string' ? image : image.url || '',
           isBanner: false,
         })),
       })
@@ -208,7 +215,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(updatedMitra)
   } catch (error) {
     console.error('Error saving mitra profile:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
     const errorCode = (error as { code?: string }).code
     const errorMeta = (error as { meta?: unknown }).meta
     console.error('Error details:', {
@@ -217,7 +225,7 @@ export async function POST(request: NextRequest) {
       meta: errorMeta,
     })
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: errorMessage || 'Internal server error' },
       { status: 500 }
     )
   }
