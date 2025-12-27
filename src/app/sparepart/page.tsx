@@ -34,6 +34,7 @@ export default function SparepartPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [brandFilter, setBrandFilter] = useState('')
   const [priceRange, setPriceRange] = useState('')
+  const [sortBy, setSortBy] = useState('popular')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -52,6 +53,31 @@ export default function SparepartPage() {
       if (searchQuery) params.set('search', searchQuery)
       if (categoryFilter) params.set('category', categoryFilter)
       if (brandFilter) params.set('brand', brandFilter)
+
+      // Add sorting
+      if (sortBy) {
+        switch (sortBy) {
+          case 'price-low':
+            params.set('sortBy', 'price')
+            params.set('sortOrder', 'asc')
+            break
+          case 'price-high':
+            params.set('sortBy', 'price')
+            params.set('sortOrder', 'desc')
+            break
+          case 'rating':
+            params.set('sortBy', 'rating')
+            params.set('sortOrder', 'desc')
+            break
+          case 'sold':
+            params.set('sortBy', 'sold')
+            params.set('sortOrder', 'desc')
+            break
+          default:
+            // popular - default sorting
+            break
+        }
+      }
 
       // Add price range filter
       if (priceRange) {
@@ -91,7 +117,7 @@ export default function SparepartPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, searchQuery, categoryFilter, brandFilter, priceRange])
+  }, [page, searchQuery, categoryFilter, brandFilter, priceRange, sortBy])
 
   useEffect(() => {
     fetchProducts()
@@ -102,11 +128,12 @@ export default function SparepartPage() {
     setPage(1)
   }
 
-  const handleSort = () => {
-    // TODO: Implement sorting
+  const handleSort = (value: string) => {
+    setSortBy(value)
+    setPage(1)
   }
 
-  const handleFilterChange = () => {
+  const handleFilterChange = (filters: Record<string, string[]>) => {
     // Update filters based on FilterSidebar callback
     const kategori = filters['Kategori']?.[0] || ''
     const brand = filters['Brand']?.[0] || ''

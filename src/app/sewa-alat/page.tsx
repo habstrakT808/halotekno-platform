@@ -24,6 +24,8 @@ export default function SewaAlatPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [availability, setAvailability] = useState('all')
+  const [priceRange, setPriceRange] = useState('')
+  const [sortBy, setSortBy] = useState('popular')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -41,6 +43,47 @@ export default function SewaAlatPage() {
       if (searchQuery) params.set('search', searchQuery)
       if (availability !== 'all') params.set('availability', availability)
 
+      // Add sorting
+      if (sortBy) {
+        switch (sortBy) {
+          case 'price-low':
+            params.set('sortBy', 'pricePerDay')
+            params.set('sortOrder', 'asc')
+            break
+          case 'price-high':
+            params.set('sortBy', 'pricePerDay')
+            params.set('sortOrder', 'desc')
+            break
+          case 'rating':
+            params.set('sortBy', 'rating')
+            params.set('sortOrder', 'desc')
+            break
+          default:
+            // popular - default sorting
+            break
+        }
+      }
+
+      // Add price range filter
+      if (priceRange) {
+        switch (priceRange) {
+          case 'under-50k':
+            params.set('maxPrice', '50000')
+            break
+          case '50k-100k':
+            params.set('minPrice', '50000')
+            params.set('maxPrice', '100000')
+            break
+          case '100k-200k':
+            params.set('minPrice', '100000')
+            params.set('maxPrice', '200000')
+            break
+          case 'above-200k':
+            params.set('minPrice', '200000')
+            break
+        }
+      }
+
       const res = await fetch(`/api/rental-items?${params}`)
       if (!res.ok) throw new Error('Failed to fetch rental items')
 
@@ -54,7 +97,7 @@ export default function SewaAlatPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, searchQuery, availability])
+  }, [page, searchQuery, availability, priceRange, sortBy])
 
   useEffect(() => {
     fetchRentalItems()
@@ -65,18 +108,23 @@ export default function SewaAlatPage() {
     setPage(1)
   }
 
-  const handleSort = () => {
-    // TODO: Implement sorting
+  const handleSort = (value: string) => {
+    setSortBy(value)
+    setPage(1)
   }
 
   const handleFilterChange = (filters: Record<string, string[]>) => {
     const ketersediaan = filters['Ketersediaan']?.[0] || 'all'
+    const harga = filters['Harga']?.[0] || ''
+
     setAvailability(ketersediaan)
+    setPriceRange(harga)
     setPage(1)
   }
 
   const handleClearFilters = () => {
     setAvailability('all')
+    setPriceRange('')
     setPage(1)
   }
 
@@ -91,6 +139,16 @@ export default function SewaAlatPage() {
           label: 'Tersedia Sekarang',
           count: stats.available,
         },
+      ],
+    },
+    {
+      title: 'Harga',
+      type: 'radio' as const,
+      options: [
+        { value: 'under-50k', label: 'Di bawah 50rb/hari' },
+        { value: '50k-100k', label: '50rb - 100rb/hari' },
+        { value: '100k-200k', label: '100rb - 200rb/hari' },
+        { value: 'above-200k', label: 'Di atas 200rb/hari' },
       ],
     },
   ]

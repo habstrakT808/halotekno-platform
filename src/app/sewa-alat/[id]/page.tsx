@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/layouts/navbar'
 import { Footer } from '@/components/layouts/footer'
+import RentalActions from '@/components/rental/rental-actions'
 import ImageGallery from '@/components/catalog/image-gallery'
 import {
   Calendar,
@@ -232,35 +233,16 @@ export default async function SewaAlatDetailPage({
             </div>
 
             {/* Actions */}
-            <div className="sticky bottom-0 space-y-3 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
-              {isAvailable ? (
-                <>
-                  <Link
-                    href={`/booking/rental?item=${item.id}`}
-                    className="block w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 py-3 text-center font-semibold text-white transition-all hover:shadow-lg"
-                  >
-                    <Calendar className="mr-2 inline h-5 w-5" />
-                    Booking Sekarang
-                  </Link>
-                  <Link
-                    href="/sewa-alat"
-                    className="block w-full rounded-lg border-2 border-blue-600 py-3 text-center font-semibold text-blue-600 transition-all hover:bg-blue-50"
-                  >
-                    Lihat Alat Lainnya
-                  </Link>
-                </>
-              ) : (
-                <button
-                  disabled
-                  className="w-full cursor-not-allowed rounded-lg bg-gray-300 py-3 text-center font-semibold text-gray-500"
-                >
-                  Tidak Tersedia
-                </button>
-              )}
-              <p className="text-center text-xs text-gray-500">
-                Hubungi kami untuk informasi lebih lanjut
-              </p>
-            </div>
+            <RentalActions
+              rentalItem={{
+                id: item.id,
+                name: item.name,
+                pricePerDay: item.pricePerDay,
+                stock: item.stock,
+                images: item.images,
+              }}
+              isAvailable={isAvailable}
+            />
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface FilterOption {
   value: string
@@ -30,6 +30,11 @@ export function FilterSidebar({
     Record<string, string[]>
   >({})
 
+  // Call onFilterChange when selectedFilters changes
+  useEffect(() => {
+    onFilterChange?.(selectedFilters)
+  }, [selectedFilters, onFilterChange])
+
   const handleFilterToggle = (
     groupTitle: string,
     value: string,
@@ -49,7 +54,6 @@ export function FilterSidebar({
         }
       }
 
-      onFilterChange?.(newFilters)
       return newFilters
     })
   }
