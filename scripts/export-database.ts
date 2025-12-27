@@ -35,17 +35,60 @@ async function exportDatabase() {
       },
     })
 
-    // Technicians
+    // Technicians - export all fields
     console.log('   Exporting technicians...')
-    data.technicians = await prisma.technician.findMany()
+    data.technicians = await prisma.technician.findMany({
+      select: {
+        id: true,
+        userId: true,
+        bio: true,
+        experience: true,
+        specialties: true,
+        rating: true,
+        totalReview: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
 
-    // Products (Spareparts)
+    // Products (Spareparts) - include category
     console.log('   Exporting products...')
-    data.products = await prisma.product.findMany()
+    data.products = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        brand: true,
+        model: true,
+        price: true,
+        stock: true,
+        images: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
 
-    // Services
+    // Services - include all correct fields
     console.log('   Exporting services...')
-    data.services = await prisma.service.findMany()
+    data.services = await prisma.service.findMany({
+      select: {
+        id: true,
+        technicianId: true,
+        name: true,
+        description: true,
+        category: true,
+        price: true,
+        minPrice: true,
+        maxPrice: true,
+        duration: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
 
     // Rental Items
     console.log('   Exporting rental items...')
